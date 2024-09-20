@@ -2,4 +2,7 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "always"
     }
+    ,
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "typescript.preferences.importModuleSpecifier": "relative",
 }
