@@ -16,7 +16,7 @@ export class AppService {
      * @returns {string} A simple greeting message.
      */
     getHello(): string {
-        this.logger.log('Hello World!');
+        this.logger.error('Hello World!');
 
         return 'Hello World!';
     }

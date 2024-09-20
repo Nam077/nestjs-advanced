@@ -45,6 +45,14 @@ export const loggerOptions = {
                 })(),
             ),
         }),
+        new winston.transports.File({
+            filename: 'logs/error.log',
+            level: 'error', // Chỉ ghi các log có mức độ error trở lên
+            format: winston.format.combine(
+                winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                winston.format.printf(formatLog),
+            ),
+        }),
     ],
 };
 

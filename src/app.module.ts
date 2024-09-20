@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +17,7 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
             isGlobal: true,
             envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env`],
         }),
+        ScheduleModule.forRoot(),
         DatabaseModule,
         CacheModule,
         WinstonModuleConfig,
