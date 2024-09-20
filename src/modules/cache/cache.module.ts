@@ -9,12 +9,12 @@ import { CacheConfigService } from './cache-config/cache-config.service';
  *
  */
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    RedisModule.forRootAsync({
-      useClass: CacheConfigService,
-    }),
-  ],
-  providers: [CacheConfigService],
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        RedisModule.forRootAsync({
+            useClass: CacheConfigService,
+        }),
+    ],
+    providers: [CacheConfigService],
 })
 export class CacheModule {}
