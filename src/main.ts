@@ -1,8 +1,9 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
+import fastifyCookie from '@fastify/cookie';
 import * as compression from 'compression';
-import * as cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
@@ -13,11 +14,15 @@ import { setupSwagger } from './common';
  * Bootstrap the NestJS application
  */
 async function bootstrap() {
-    // Create the NestJS application instance
-    const app = await NestFactory.create(AppModule);
+    // Create the NestJS application instance using Fastify
+    const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({}));
 
     // Use Helmet for security headers
-    app.use(helmet());
+    app.use(
+        helmet({
+            contentSecurityPolicy: false,
+        }),
+    );
 
     // Enable API versioning
     app.enableVersioning({
@@ -25,8 +30,9 @@ async function bootstrap() {
     });
 
     // Use cookie parser middleware
-    app.use(cookieParser());
-
+    await app.register(fastifyCookie, {
+        secret: 'my-secret',
+    });
     // Use compression middleware
     app.use(compression());
 
