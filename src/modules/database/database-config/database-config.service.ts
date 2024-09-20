@@ -1,11 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
+import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
+/**
+ * @description Database configuration service for handling database configuration
+ */
 @Injectable()
 export class DatabaseConfigService implements TypeOrmOptionsFactory {
+  /**
+   * @param {ConfigService} configService - Configuration service for handling environment variables
+   */
   constructor(private configService: ConfigService) {}
 
+  /**
+   * @description Create TypeORM options for handling database
+   * @returns {TypeOrmModuleOptions} - TypeORM options
+   * @memberof DatabaseConfigService
+   */
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
       type: 'postgres',
@@ -14,7 +25,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
       username: this.configService.get<string>('POSTGRES_USER'),
       password: this.configService.get<string>('POSTGRES_PASSWORD'),
       database: this.configService.get<string>('POSTGRES_DB'),
-      entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+      entities: [],
       synchronize: this.configService.get<string>('NODE_ENV') === 'development', // chỉ bật trong môi trường phát triển
     };
   }
