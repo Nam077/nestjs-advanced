@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
-import { ConfigModule } from '@nestjs/config';
 
 /**
  *
