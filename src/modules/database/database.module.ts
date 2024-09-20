@@ -9,7 +9,7 @@ import { DatabaseConfigService } from './database-config/database-config.service
  */
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       useClass: DatabaseConfigService,
     }),
