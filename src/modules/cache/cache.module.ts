@@ -5,7 +5,7 @@ import { CacheConfigService } from './cache-config/cache-config.service';
 
 @Module({
   imports: [
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }),
     RedisModule.forRootAsync({
       useClass: CacheConfigService,
     }),
