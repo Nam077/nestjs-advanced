@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
+import { WinstonModule } from './modules/winston/winston.module';
 
 /**
  *
@@ -17,6 +18,7 @@ import { DatabaseModule } from './modules/database/database.module';
     }),
     DatabaseModule,
     CacheModule,
+    WinstonModule,
   ],
   controllers: [AppController],
   providers: [AppService],
