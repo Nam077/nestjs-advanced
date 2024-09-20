@@ -7,17 +7,18 @@ import { AppService } from './app.service';
  */
 @Controller()
 export class AppController {
-  /**
-   *
-   * @param appService
-   */
-  constructor(private readonly appService: AppService) {}
+    /**
+     *
+     * @param {AppService} appService -  The app service instance
+     */
+    constructor(private readonly appService: AppService) {}
 
-  /**
-   *
-   */
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
+    /**
+     * @description Get hello world
+     * @returns {string} - Hello world
+     */
+    @Get()
+    getHello(): string {
+        return this.appService.getHello();
+    }
 }

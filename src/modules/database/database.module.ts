@@ -8,12 +8,12 @@ import { DatabaseConfigService } from './database-config/database-config.service
  * Database module for handling database configuration
  */
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      useClass: DatabaseConfigService,
-    }),
-  ],
-  providers: [DatabaseConfigService],
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        TypeOrmModule.forRootAsync({
+            useClass: DatabaseConfigService,
+        }),
+    ],
+    providers: [DatabaseConfigService],
 })
 export class DatabaseModule {}

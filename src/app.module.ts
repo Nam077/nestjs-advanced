@@ -5,22 +5,22 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
-import { WinstonModule } from './modules/winston/winston.module';
+import { WinstonModuleConfig } from './modules/winston/winston.module';
 
 /**
  *
  */
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env`],
-    }),
-    DatabaseModule,
-    CacheModule,
-    WinstonModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+            envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env`],
+        }),
+        DatabaseModule,
+        CacheModule,
+        WinstonModuleConfig,
+    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}
