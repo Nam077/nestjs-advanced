@@ -310,11 +310,23 @@ export class UserService
      * @returns {Promise<APIResponseData<User>>} A promise that resolves with the updated user data.
      */
     async update(id: string, updateDto: UpdateUserDto, userAuth: UserAuth): Promise<APIResponseData<User>> {
-        userAuth;
-        updateDto;
-        id;
+        const userCheck: User = await this.findOneOrThrow(id);
 
-        return Promise.resolve(undefined);
+        if (userAuth.role !== 'admin' && userCheck.id !== userAuth.id) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        if (updateDto.role && userAuth.role !== 'admin') {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }
+
+        const user = await this.updateHandler(id, updateDto);
+
+        return {
+            status: HttpStatus.OK,
+            data: user,
+            message: 'User updated successfully!',
+        };
     }
 
     /**
@@ -325,9 +337,36 @@ export class UserService
      * @returns {Promise<User>} A promise that resolves with the updated user.
      */
     async updateHandler(id: string, updateDto: UpdateUserDto): Promise<User> {
-        id;
-        updateDto;
+        const user = await this.findOneOrThrow(id);
 
-        return Promise.resolve(undefined);
+        const { email, password, name, role } = updateDto;
+
+        // Check if email needs to be updated and whether it already exists
+        if (email && email !== user.email) {
+            const emailExists = await this.isExistByEmail(email);
+
+            if (emailExists) {
+                throw new HttpException(`User with email ${email} already exists`, HttpStatus.CONFLICT);
+            }
+
+            user.email = email;
+        }
+
+        // Update password only if provided and hash it
+        if (password) {
+            user.password = password;
+            user.hashPassword();
+        }
+
+        // Update name and role if provided
+        if (name) {
+            user.name = name;
+        }
+
+        if (role) {
+            user.role = role;
+        }
+
+        return await this.userRepository.save(user);
     }
 }
