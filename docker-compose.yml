@@ -1,41 +1,69 @@
-
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: nestjs_app
     ports:
       - '${APP_PORT}:${APP_PORT}'
     env_file:
-      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
+      - .env.docker
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${APP_PORT}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
+    volumes:
+      - ./src:/usr/src/app/src
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: postgres_db
     ports:
       - '${POSTGRES_PORT}:5432'
     env_file:
-      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
+      - .env.docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - my_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   redis:
-    image: redis:latest
+    image: redis:alpine
     container_name: redis_cache
     ports:
       - '${REDIS_PORT}:6379'
     env_file:
-      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
+      - .env.docker
     volumes:
       - redis_data:/data
     networks:
       - my_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: always
 
 volumes:
   postgres_data:
