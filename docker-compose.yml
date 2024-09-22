@@ -1,65 +1,46 @@
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+    container_name: nestjs_app
     ports:
-      - '3000:3000'
-    environment:
-      NODE_ENV: 'production'
-      POSTGRES_HOST: 'postgres'
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      REDIS_HOST: 'redis'
-      REDIS_PORT: 6379
+      - '${APP_PORT}:${APP_PORT}'
+    env_file:
+      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"] 
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - my_network
 
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+  db:
+    image: postgres:latest
+    container_name: postgres_db
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:5432'
+    env_file:
+      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - my_network
 
   redis:
-    image: redis:alpine
+    image: redis:latest
+    container_name: redis_cache
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT}:6379'
+    env_file:
+      - .env.docker  # Chỉ định file .env.docker cho biến môi trường
+    volumes:
+      - redis_data:/data
     networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - my_network
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
-  app-network:
+  my_network:
     driver: bridge

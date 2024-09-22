@@ -4,6 +4,8 @@ FROM node:16-alpine
 # Tạo thư mục làm việc
 WORKDIR /app
 
+RUN npm install -g @nestjs/cli
+
 # Copy package.json và cài đặt dependencies
 COPY package*.json ./
 RUN npm install --only=production
