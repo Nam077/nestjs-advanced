@@ -974,7 +974,7 @@
   optionalDependencies:
     "@nestjs/terminus" "10.2.0"
 
-"@nestjs/cli@^10.0.0":
+"@nestjs/cli@^10.4.5":
   version "10.4.5"
   resolved "https://registry.yarnpkg.com/@nestjs/cli/-/cli-10.4.5.tgz#d6563b87e8ca1d0f256c19a7847dbcc96c76a88e"
   integrity sha512-FP7Rh13u8aJbHe+zZ7hM0CC4785g9Pw4lz4r2TTgRtf0zTxSWMkJaPEwyjX8SK9oWK2GsYxl+fKpwVZNbmnj9A==

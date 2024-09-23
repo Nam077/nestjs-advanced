@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^19.5.0",
-    "@nestjs/cli": "^10.0.0",
+    "@nestjs/cli": "^10.4.5",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/bcrypt": "^5.0.2",
