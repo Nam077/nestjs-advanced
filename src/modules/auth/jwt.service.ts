@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { JwtPayload, JwtResponse, KeyType } from '../../common';
+import { AccessToken, JwtPayload, JwtResponse, KeyType, RefreshToken } from '../../common';
 import { KeyService } from '../key/key.service';
 import { User } from '../user/entities/user.entity';
 
@@ -30,10 +30,7 @@ export class JwtServiceLocal {
      * @param {User} user - The user entity
      * @returns {string} The access token
      */
-    async signAccessToken(user: User): Promise<{
-        token: string;
-        exp: number;
-    }> {
+    async signAccessToken(user: User): Promise<AccessToken> {
         const jwtPayload: JwtPayload = {
             sub: user.id,
             email: user.email,
@@ -54,6 +51,7 @@ export class JwtServiceLocal {
         return {
             token,
             exp: this.jwtService.decode(token).exp,
+            jwtId,
         };
     }
 
@@ -62,10 +60,7 @@ export class JwtServiceLocal {
      * @param {User} user - The payload
      * @returns {string} The refresh token
      */
-    async signRefreshToken(user: User): Promise<{
-        token: string;
-        exp: number;
-    }> {
+    async signRefreshToken(user: User): Promise<RefreshToken> {
         const key = await this.keyService.getCurrentKey(KeyType.REFRESH_KEY);
 
         const jwtPayload: JwtPayload = {
@@ -87,6 +82,7 @@ export class JwtServiceLocal {
         return {
             token,
             exp: this.jwtService.decode(token).exp,
+            jwtId,
         };
     }
 
