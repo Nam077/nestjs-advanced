@@ -1,4 +1,5 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
@@ -16,6 +17,8 @@ import { setupSwagger } from './common';
 async function bootstrap() {
     // Create the NestJS application instance using Fastify
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({}));
+    const configService: ConfigService = app.get(ConfigService);
+    const PORT = configService.get<number>('APP_PORT', 3000);
 
     // Use Helmet for security headers
     app.use(
@@ -54,8 +57,9 @@ async function bootstrap() {
     // Setup Swagger documentation
     setupSwagger(app);
 
-    // Start the application and listen on port 3000
-    await app.listen(3000);
+    // Start the application and listen on the specified port and address
+    await app.listen(PORT, '0.0.0.0');
+    console.log(`Application is running on: ${await app.getUrl()}`);
 }
 
 // Bootstrap the application

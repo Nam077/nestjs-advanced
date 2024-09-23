@@ -10,7 +10,6 @@ import { DatabaseModule } from './modules/database/database.module';
 import { KeyModule } from './modules/key/key.module';
 import { UserModule } from './modules/user/user.module';
 import { WinstonModuleConfig } from './modules/winston/winston.module';
-
 /**
  *
  */
@@ -18,12 +17,11 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env`],
         }),
         ScheduleModule.forRoot(),
-        DatabaseModule,
         CacheModule,
         WinstonModuleConfig,
+        DatabaseModule,
         UserModule,
         AuthModule,
         KeyModule,

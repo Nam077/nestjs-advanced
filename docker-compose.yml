@@ -3,63 +3,72 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: nestjs_app
     ports:
-      - '3000:3000'
-    environment:
-      NODE_ENV: 'production'
-      POSTGRES_HOST: 'postgres'
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      REDIS_HOST: 'redis'
-      REDIS_PORT: 6379
+      - '${APP_PORT}:${APP_PORT}'
+    env_file:
+      - .env.docker
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - app-network
+      - my_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"] 
+      test: ["CMD-SHELL", "curl -f http://localhost:${APP_PORT}/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: always
+    volumes:
+      - ./src:/usr/src/app/src
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:5432'
+    env_file:
+      - .env.docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - my_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: always
 
   redis:
     image: redis:alpine
+    container_name: redis_cache
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT}:6379'
+    env_file:
+      - .env.docker
+    volumes:
+      - redis_data:/data
     networks:
-      - app-network
+      - my_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
+    restart: always
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
-  app-network:
+  my_network:
     driver: bridge
