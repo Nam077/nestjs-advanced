@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
-import { JwtResponse, JwtServiceLocal } from './jwt.service';
+import { JwtServiceLocal } from './jwt.service';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './dtos/login.dto';
-import { JwtPayload } from '../../common';
+import { JwtPayload, JwtResponse } from '../../common';
 import { User } from '../user/entities/user.entity';
 
 export interface LoginResponse {
@@ -58,13 +58,6 @@ export class AuthService {
      * @throws {UnauthorizedException} The unauthorized exception
      */
     async validateUser(payload: JwtPayload): Promise<User> {
-        return this.userService.findOneHandler(payload.sub, {
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-            },
-        });
+        return this.userService.findByEmailAndId(payload.email, payload.sub);
     }
 }

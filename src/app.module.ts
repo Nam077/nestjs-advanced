@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { KeyModule } from './modules/key/key.module';
+import { SessionModule } from './modules/session/session.module';
 import { UserModule } from './modules/user/user.module';
 import { WinstonModuleConfig } from './modules/winston/winston.module';
 /**
@@ -25,6 +26,7 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         UserModule,
         AuthModule,
         KeyModule,
+        SessionModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-
-import { Request } from 'express';
 
 import { AuthService, LoginResponse } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
+import { UserAuth } from '../../common';
+import { CurrentUser } from '../../common/decorators';
 /**
  *
  */
@@ -29,11 +29,12 @@ export class AuthController {
     }
 
     /**
-     * @param {Request} req - The request object
+     * @param {UserAuth} user - The user data from the JWT token
+     * @returns {UserAuth} The user data
      */
     @UseGuards(JwtAuthGuard)
     @Get('profile')
-    profile(@Req() req: Request) {
-        return req.user;
+    profile(@CurrentUser<UserAuth>() user: UserAuth): UserAuth {
+        return user;
     }
 }

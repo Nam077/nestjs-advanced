@@ -387,4 +387,22 @@ export class UserService
             },
         });
     }
+
+    /**
+     * @function validatePassword
+     * @description Validates a user's password.
+     * @param {string} email - The email of the user.
+     * @param {string} id - The ID of the user.
+     */
+    async findByEmailAndId(email: string, id: string): Promise<User> {
+        return await this.userRepository.findOne({
+            where: { email, id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+            },
+        });
+    }
 }

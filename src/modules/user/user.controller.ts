@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,6 +8,8 @@ import { UserService } from './user.service';
 import { APIResponseData, UserAuth } from '../../common';
 import { UserPaginationDto } from './dto/user-pagination.dto';
 import { User } from './entities/user.entity';
+import { CurrentUser } from '../../common/decorators';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
 /**
  * User Controller
@@ -15,13 +17,8 @@ import { User } from './entities/user.entity';
 @ApiTags('User')
 @ApiBearerAuth()
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserController {
-    private readonly userAuth: UserAuth = {
-        id: '1',
-        email: 'test@test.com',
-        role: 'admin',
-    };
-
     private readonly userPaginationDto: UserPaginationDto = {};
     private readonly userCursorDto: UserCursorDto = {};
 
@@ -33,82 +30,100 @@ export class UserController {
 
     /**
      * Create a new user
+     * @param {user} user - The user data
      * @param {CreateUserDto} createUserDto - The user data
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Post()
-    create(@Body() createUserDto: CreateUserDto): Promise<any> {
-        return this.userService.create(createUserDto, this.userAuth);
+    create(@CurrentUser<UserAuth>() user: UserAuth, @Body() createUserDto: CreateUserDto): Promise<any> {
+        return this.userService.create(createUserDto, user);
     }
 
     /**
      * Find all users
+     * @param {user} user - The user data
      * @param {UserPaginationDto} userPaginationDto - The user pagination data
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Get('/pagination')
-    findAll(@Query() userPaginationDto: UserPaginationDto): Promise<APIResponseData<User>> {
-        return this.userService.findAll(userPaginationDto, this.userAuth);
+    findAll(
+        @CurrentUser<UserAuth>() user: UserAuth,
+        @Query() userPaginationDto: UserPaginationDto,
+    ): Promise<APIResponseData<User>> {
+        return this.userService.findAll(userPaginationDto, user);
     }
 
     /**
      * Find all users
+     * @param {user} user - The user data
      * @param {UserCursorDto} userCursorDto - The user cursor data
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Get('/cursor')
-    findAllCursor(@Query() userCursorDto: UserCursorDto): Promise<APIResponseData<User>> {
-        return this.userService.findAll(userCursorDto, this.userAuth);
+    findAllCursor(
+        @CurrentUser<UserAuth>() user: UserAuth,
+        @Query() userCursorDto: UserCursorDto,
+    ): Promise<APIResponseData<User>> {
+        return this.userService.findAll(userCursorDto, user);
     }
 
     /**
      * Find one user by ID
+     * @param {user} user - The user data
      * @param {string} id - The user ID
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Get(':id')
-    findOne(@Param('id') id: string): Promise<any> {
-        return this.userService.findOne(id, this.userAuth);
+    findOne(@CurrentUser<UserAuth>() user: UserAuth, @Param('id') id: string): Promise<any> {
+        return this.userService.findOne(id, user);
     }
 
     /**
      * Update a user by ID
+     * @param {user} user - The user data
      * @param {string} id - The user ID
      * @param {UpdateUserDto} updateUserDto - The user data
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<any> {
-        return this.userService.update(id, updateUserDto, this.userAuth);
+    update(
+        @CurrentUser<UserAuth>() user: UserAuth,
+        @Param('id') id: string,
+        @Body() updateUserDto: UpdateUserDto,
+    ): Promise<any> {
+        return this.userService.update(id, updateUserDto, user);
     }
 
     /**
      * Restore a user by ID
+     * @param {user} user - The user data
      * @param {string} id - The user ID
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Patch('restore/:id')
-    restore(@Param('id') id: string): Promise<any> {
-        return this.userService.restore(id, this.userAuth);
+    restore(@CurrentUser<UserAuth>() user: UserAuth, @Param('id') id: string): Promise<any> {
+        return this.userService.restore(id, user);
     }
 
     /**
      * Remove a user by ID
+     * @param {user} user - The user data
      * @param {string} id - The user ID
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Delete(':id')
-    softRemove(@Param('id') id: string): Promise<any> {
-        return this.userService.softDelete(id, this.userAuth);
+    softRemove(@CurrentUser<UserAuth>() user: UserAuth, @Param('id') id: string): Promise<any> {
+        return this.userService.softDelete(id, user);
     }
 
     /**
      * Remove a user by ID
+     * @param {user} user - The user data
      * @param {string} id - The user ID
      * @returns { Promise<APIResponseData<User>>} - The user data
      */
     @Delete('hard/:id')
-    remove(@Param('id') id: string): Promise<any> {
-        return this.userService.delete(id, this.userAuth);
+    remove(@CurrentUser<UserAuth>() user: UserAuth, @Param('id') id: string): Promise<any> {
+        return this.userService.delete(id, user);
     }
 }

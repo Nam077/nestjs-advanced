@@ -2,21 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { JwtPayload, KeyType } from '../../common';
+import { v4 as uuidv4 } from 'uuid';
+
+import { JwtPayload, JwtResponse, KeyType } from '../../common';
 import { KeyService } from '../key/key.service';
 import { User } from '../user/entities/user.entity';
 
-export interface JwtResponse {
-    user: User;
-    accessToken: {
-        token: string;
-        exp: number;
-    };
-    refreshToken: {
-        token: string;
-        exp: number;
-    };
-}
 /**
  *
  */
@@ -49,11 +40,13 @@ export class JwtServiceLocal {
             name: user.name,
         };
 
+        const jwtId = uuidv4();
         const key = await this.keyService.getCurrentKey(KeyType.ACCESS_KEY);
 
         const token = this.jwtService.sign(jwtPayload, {
             algorithm: 'RS256',
             keyid: key.id,
+            jwtid: jwtId,
             privateKey: key.decryptedPrivateKey,
             expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
         });
@@ -81,9 +74,12 @@ export class JwtServiceLocal {
             name: user.name,
         };
 
+        const jwtId = uuidv4();
+
         const token = this.jwtService.sign(jwtPayload, {
             algorithm: 'RS256',
             keyid: key.id,
+            jwtid: jwtId,
             secret: key.decryptedPrivateKey,
             expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME'),
         });
@@ -100,8 +96,9 @@ export class JwtServiceLocal {
      * @returns {JwtResponse} The JWT response
      */
     async signTokens(user: User): Promise<JwtResponse> {
-        const accessToken = await this.signAccessToken(user);
-        const refreshToken = await this.signRefreshToken(user);
+        const tasks = [this.signAccessToken(user), this.signRefreshToken(user)];
+
+        const [accessToken, refreshToken] = await Promise.all(tasks);
 
         delete user.password;
 
