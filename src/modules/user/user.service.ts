@@ -369,4 +369,22 @@ export class UserService
 
         return await this.userRepository.save(user);
     }
+
+    /**
+     * @function validatePassword
+     * @description Validates a user's password.
+     * @param {string} email - The email of the user.
+     */
+    async findByEmail(email: string) {
+        return await this.userRepository.findOne({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                password: true,
+            },
+        });
+    }
 }

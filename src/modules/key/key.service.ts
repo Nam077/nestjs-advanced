@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { AES, lib, enc } from 'crypto-js';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston/dist/winston.constants';
-import { LessThan } from 'typeorm';
-import { Repository } from 'typeorm/repository/Repository';
+import * as crypto from 'crypto';
+import { AES, enc } from 'crypto-js';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { LessThan, Repository } from 'typeorm';
 import { Logger } from 'winston';
 
 import { Key } from './entities/key.entity';
@@ -21,32 +21,32 @@ export class KeyService {
     /**
      *
      * @param {Repository<Key>} keyRepository - The key repository
-     * @param {ConfigService} configService - The config service
-     * @param {Logger} logger - The logger
+     * @param {ConfigService} configService - The configuration service
+     * @param {Logger} logger - The logger service
      */
     constructor(
         @InjectRepository(Key)
         private readonly keyRepository: Repository<Key>,
         private readonly configService: ConfigService,
-        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService,
     ) {}
 
     /**
-     * Encrypts the key with the master key.
-     * @param {string} key - The key to encrypt
-     * @returns {string} The encrypted key
+     * Encrypts the private key with the master key.
+     * @param {string} privateKey - The private key to encrypt
+     * @returns {string} The encrypted private key
      */
-    encryptKey(key: string): string {
-        return AES.encrypt(key, this.configService.get('MASTER_KEY')).toString();
+    encryptPrivateKey(privateKey: string): string {
+        return AES.encrypt(privateKey, this.configService.get('MASTER_KEY')).toString();
     }
 
     /**
-     * Decrypts the key with the master key.
-     * @param {string} encryptedKey - The key to decrypt
-     * @returns {string} The decrypted key
+     * Decrypts the private key with the master key.
+     * @param {Buffer} encryptedPrivateKey - The encrypted private key
+     * @returns {string} The decrypted private key
      */
-    decryptKey(encryptedKey: Buffer): string {
-        const encryptedKeyStr = encryptedKey.toString('base64'); // Chuyển đổi từ Buffer thành chuỗi
+    decryptPrivateKey(encryptedPrivateKey: Buffer): string {
+        const encryptedKeyStr = encryptedPrivateKey.toString('base64');
 
         return AES.decrypt(encryptedKeyStr, this.configService.get('MASTER_KEY')).toString(enc.Utf8);
     }
@@ -61,11 +61,11 @@ export class KeyService {
     }
 
     /**
-     * Retrieves the secret key by its ID.
+     * Retrieves the secret private key by its ID.
      * @param {string} id - The key ID
-     * @returns {Promise<string>} The decrypted key
+     * @returns {Promise<string>} The decrypted private key
      */
-    async getSecretKeyById(id: string): Promise<string> {
+    async getSecretPrivateKeyById(id: string): Promise<string> {
         const key = await this.getKeyById(id);
 
         if (!key) {
@@ -73,15 +73,31 @@ export class KeyService {
             throw new Error('Key not found');
         }
 
-        return this.decryptKey(key.encryptedKey);
+        return this.decryptPrivateKey(key.encryptedPrivateKey);
     }
 
     /**
-     * Adds a new key to the database.
-     * @param {KeyType} keyType - The type of the key
+     *
+     * @param {string} id - The key ID
+     * @returns {Promise<string>} The public key
      */
-    async addKey(keyType: KeyType): Promise<void> {
-        // Prevent multiple concurrent key creations
+    async getPulicKeyById(id: string): Promise<string> {
+        const key = await this.getKeyById(id);
+
+        if (!key) {
+            this.logger.error(`Key not found: ${id}`);
+            throw new Error('Key not found');
+        }
+
+        return key.publicKey;
+    }
+
+    /**
+     * Adds a new key pair (RSA private and public key) to the database.
+     * @param {KeyType} keyType - The type of the key
+     * @returns {Promise<Key>} The new key entity
+     */
+    async addKeyPair(keyType: KeyType): Promise<Key> {
         if (this.isKeyBeingCreated) {
             this.logger.warn(`Key creation already in progress for type: ${keyType}`);
 
@@ -91,21 +107,30 @@ export class KeyService {
         this.isKeyBeingCreated = true;
 
         try {
-            const newKey = lib.WordArray.random(16).toString();
-            const encryptedKey = this.encryptKey(newKey);
+            // Generate RSA key pair (2048-bit key size)
+            const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+                modulusLength: 2048,
+                publicKeyEncoding: { type: 'pkcs1', format: 'pem' },
+                privateKeyEncoding: { type: 'pkcs1', format: 'pem' },
+            });
+
+            const encryptedPrivateKey = this.encryptPrivateKey(privateKey); // Mã hóa private key
 
             const key = new Key();
 
-            key.encryptedKey = Buffer.from(encryptedKey, 'base64');
+            key.encryptedPrivateKey = Buffer.from(encryptedPrivateKey, 'base64');
+            key.publicKey = publicKey; // Lưu public key không mã hóa
             key.type = keyType;
 
-            await this.keyRepository.save(key);
+            const savedKey = await this.keyRepository.save(key);
 
-            this.logger.info(`Added new ${keyType} key`);
+            this.logger.log(`Added new RSA key pair for ${keyType}`);
+
+            return savedKey;
         } catch (error) {
-            this.logger.error(`Error while adding ${keyType} key: ${error.message}`);
+            this.logger.error(`Error while adding RSA key pair: ${error.message}`);
         } finally {
-            this.isKeyBeingCreated = false; // Reset the flag
+            this.isKeyBeingCreated = false;
         }
     }
 
@@ -125,7 +150,7 @@ export class KeyService {
             createdAt: LessThan(retentionDate),
         });
 
-        this.logger.info(`Deleted old ${keyType} keys before date: ${retentionDate}`);
+        this.logger.log(`Deleted old ${keyType} keys before date: ${retentionDate}`);
     }
 
     /**
@@ -133,35 +158,21 @@ export class KeyService {
      * @param {KeyType} keyType - The type of the key
      * @returns {Promise<Key>} The current key
      */
-    async getCurrentKey(keyType: KeyType): Promise<Key> {
-        return this.keyRepository.findOne({
-            where: { type: keyType },
+    async getCurrentKey(keyType: KeyType): Promise<Key & { decryptedPrivateKey: string }> {
+        let key = await this.keyRepository.findOne({
+            where: { type: keyType, isActive: true },
             order: { createdAt: 'DESC' },
         });
-    }
 
-    /**
-     * Retrieves the current secret key, and adds a new one if none exists.
-     * @param {KeyType} keyType - The type of the key
-     * @returns {Promise<Key & { key: string }>} The current key with its decrypted value
-     */
-    async getCurrentSecretKey(keyType: KeyType): Promise<Key & { key: string }> {
-        let key = await this.getCurrentKey(keyType);
-
-        // If no key exists, create one
         if (!key) {
-            await this.addKey(keyType);
-            key = await this.getCurrentKey(keyType); // Get the newly created key
+            key = await this.addKeyPair(keyType);
         }
 
-        // If key creation still fails, throw an error
-        if (!key) {
-            throw new Error(`Failed to create or retrieve key for ${keyType}`);
-        }
+        const decryptedPrivateKey = this.decryptPrivateKey(key.encryptedPrivateKey);
 
         return {
             ...key,
-            key: this.decryptKey(key.encryptedKey),
+            decryptedPrivateKey,
         };
     }
 }

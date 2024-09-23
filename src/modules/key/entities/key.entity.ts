@@ -3,7 +3,7 @@ import { Entity, Column } from 'typeorm';
 import { BaseEntityCustom, KeyType } from '../../../common';
 
 /**
- *
+ * Entity để lưu thông tin về các khóa công khai và bí mật.
  */
 @Entity({
     name: 'keys',
@@ -13,12 +13,20 @@ import { BaseEntityCustom, KeyType } from '../../../common';
 })
 export class Key extends BaseEntityCustom {
     @Column({
-        name: 'encrypted_key',
+        name: 'encrypted_private_key',
         type: 'bytea',
         nullable: false,
-        comment: 'Encrypted key stored in binary format',
+        comment: 'Encrypted private key stored in binary format',
     })
-    encryptedKey: Buffer;
+    encryptedPrivateKey: Buffer;
+
+    @Column({
+        name: 'public_key',
+        type: 'text',
+        nullable: false,
+        comment: 'Public key used for verifying JWT',
+    })
+    publicKey: string;
 
     @Column({
         name: 'type',
@@ -30,7 +38,6 @@ export class Key extends BaseEntityCustom {
     })
     type: KeyType;
 
-    //status
     @Column({
         name: 'is_active',
         type: 'boolean',
@@ -38,6 +45,4 @@ export class Key extends BaseEntityCustom {
         comment: `Status of the key`,
     })
     isActive: boolean;
-
-    //relationship
 }
