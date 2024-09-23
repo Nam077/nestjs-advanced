@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
@@ -27,14 +27,6 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         KeyModule,
     ],
     controllers: [AppController],
-    providers: [AppService, ConfigService],
+    providers: [AppService],
 })
-export class AppModule {
-    /**
-     *
-     * @param {ConfigService} configService - Configuration service for handling environment variables
-     */
-    constructor(private configService: ConfigService) {
-        console.log(`NODE_ENV: ${this.configService.get('POSTGRES_HOST')}`);
-    }
-}
+export class AppModule {}
