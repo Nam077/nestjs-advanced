@@ -32,7 +32,7 @@ export class AuthController {
         console.log(ua);
         console.log(ipGeo);
 
-        return this.authService.login(loginDto);
+        return this.authService.login(loginDto, ua, ipGeo);
     }
 
     /**

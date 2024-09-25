@@ -7,6 +7,7 @@ import fastifyCookie from '@fastify/cookie';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import * as os from 'os';
 
 import { AppModule } from './app.module';
 import { setupSwagger } from './common';
@@ -57,9 +58,15 @@ async function bootstrap() {
     // Setup Swagger documentation
     setupSwagger(app);
 
+    const networkInterfaces = os.networkInterfaces();
+
+    const localIp = Object.values(networkInterfaces)
+        .flat()
+        .find((iface) => iface?.family === 'IPv4' && !iface.internal)?.address;
+
     // Start the application and listen on the specified port and address
     await app.listen(PORT, '0.0.0.0');
-    console.log(`Application is running on: ${await app.getUrl()}`);
+    console.log(`Application is running on: ${await app.getUrl()}\nLocal IP: http://${localIp}:${PORT}`);
 }
 
 // Bootstrap the application

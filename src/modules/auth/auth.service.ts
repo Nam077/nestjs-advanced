@@ -1,18 +1,26 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
+import { Details } from 'express-useragent';
 
 import { JwtServiceLocal } from './jwt.service';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './dtos/login.dto';
-import { AccessToken, JwtPayload, JwtResponse, RefreshToken } from '../../common';
+import {
+    AccessToken,
+    convertTimeStampToSeconds,
+    GeoIpI,
+    JwtPayload,
+    JwtResponse,
+    RefreshToken,
+    SESSION_KEY,
+} from '../../common';
+import { RedisService } from '../cache/cache.service';
 import { User } from '../user/entities/user.entity';
 
 export interface LoginResponse {
     data: {
         accessToken: Omit<AccessToken, 'jwtId'>;
-        refreshToken: Omit<RefreshToken, 'jwtId'>;
+        refreshToken: Omit<RefreshToken, 'jwtId' | 'sessionId'>;
         user: User;
     };
     message: string;
@@ -26,21 +34,23 @@ export class AuthService {
      *
      * @param {JwtServiceLocal} jwtService - The JWT service
      * @param {UserService} userService - The user service
-     * @param {Redis} redis - The Redis instance
+     * @param {RedisService} cacheService - The cache service
      */
     constructor(
         private readonly jwtService: JwtServiceLocal,
         private readonly userService: UserService,
-        @InjectRedis() private readonly redis: Redis,
+        private readonly cacheService: RedisService,
     ) {}
 
     /**
      * Login a user
      * @param {LoginDto} loginDto - The login data
+     * @param {Details} ua - The user agent data
+     * @param {GeoIpI} ipGeo - The geo IP data
      * @returns {Promise<JwtResponse>} The JWT response
      * @throws {Error} The error message
      */
-    async login(loginDto: LoginDto): Promise<LoginResponse> {
+    async login(loginDto: LoginDto, ua: Details, ipGeo: GeoIpI): Promise<LoginResponse> {
         const { email, password } = loginDto;
         const user = await this.userService.findByEmail(email);
 
@@ -55,9 +65,19 @@ export class AuthService {
         }
 
         const data = await this.jwtService.signTokens(user);
-        const key = `refreshToken:${data.refreshToken.jwtId}`;
+        const key = `${SESSION_KEY}:${data.refreshToken.sessionId}`;
 
-        await this.redis.set(key, data.refreshToken.token, 'EX', data.refreshToken.exp);
+        const userData = {
+            ip: ipGeo.ip,
+            userAgent: ua.source,
+            userId: user.id,
+            email: user.email,
+            os: ua.os,
+            browser: ua.browser,
+            jwtId: data.refreshToken.jwtId,
+        };
+
+        await this.cacheService.set(key, userData, convertTimeStampToSeconds(data.refreshToken.exp));
 
         return {
             data: {

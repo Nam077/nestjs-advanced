@@ -62,11 +62,13 @@ export class JwtServiceLocal {
      */
     async signRefreshToken(user: User): Promise<RefreshToken> {
         const key = await this.keyService.getCurrentKey(KeyType.REFRESH_KEY);
+        const sessionId = uuidv4();
 
         const jwtPayload: JwtPayload = {
             sub: user.id,
             email: user.email,
             name: user.name,
+            sessionId,
         };
 
         const jwtId = uuidv4();
@@ -83,6 +85,7 @@ export class JwtServiceLocal {
             token,
             exp: this.jwtService.decode(token).exp,
             jwtId,
+            sessionId,
         };
     }
 
@@ -92,9 +95,8 @@ export class JwtServiceLocal {
      * @returns {JwtResponse} The JWT response
      */
     async signTokens(user: User): Promise<JwtResponse> {
-        const tasks = [this.signAccessToken(user), this.signRefreshToken(user)];
-
-        const [accessToken, refreshToken] = await Promise.all(tasks);
+        const accessToken = await this.signAccessToken(user);
+        const refreshToken = await this.signRefreshToken(user);
 
         delete user.password;
 

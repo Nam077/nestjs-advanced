@@ -1,13 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { RedisModule } from '@nestjs-modules/ioredis';
 
 import { CacheConfigService } from './cache-config/cache-config.service';
+import { RedisService } from './cache.service';
+import { ExampleController } from './example.controller';
 
 /**
  *
  */
+@Global()
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
@@ -15,6 +18,8 @@ import { CacheConfigService } from './cache-config/cache-config.service';
             useClass: CacheConfigService,
         }),
     ],
-    providers: [CacheConfigService],
+    providers: [CacheConfigService, RedisService],
+    controllers: [ExampleController],
+    exports: [RedisService],
 })
 export class CacheModule {}
