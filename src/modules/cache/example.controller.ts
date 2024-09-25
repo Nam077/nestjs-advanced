@@ -33,7 +33,7 @@ export class ExampleController {
     @Get()
     async getAllKey(): Promise<any> {
         // const value = await this.redisService.flushAll;
-        return await this.redisService.flushAll();
+        return await this.redisService.getAllKeysAndValues();
     }
 
     // API để lấy giá trị từ Redis
