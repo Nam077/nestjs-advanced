@@ -13,10 +13,20 @@ import {
     JwtResponse,
     RefreshToken,
     SESSION_KEY,
+    UserAuth,
 } from '../../common';
 import { RedisService } from '../cache/cache.service';
 import { User } from '../user/entities/user.entity';
 
+export interface UserData {
+    ip: string;
+    userAgent: string;
+    userId: string;
+    email: string;
+    os: string;
+    browser: string;
+    jwtId: string;
+}
 export interface LoginResponse {
     data: {
         accessToken: Omit<AccessToken, 'jwtId'>;
@@ -64,10 +74,15 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        const data = await this.jwtService.signTokens(user);
+        const data = await this.jwtService.signTokens({
+            email: user.email,
+            sub: user.id,
+            name: user.name,
+        });
+
         const key = `${SESSION_KEY}:${data.refreshToken.sessionId}`;
 
-        const userData = {
+        const userData: UserData = {
             ip: ipGeo.ip,
             userAgent: ua.source,
             userId: user.id,
@@ -78,6 +93,7 @@ export class AuthService {
         };
 
         await this.cacheService.set(key, userData, convertTimeStampToSeconds(data.refreshToken.exp));
+        delete user.password;
 
         return {
             data: {
@@ -89,7 +105,7 @@ export class AuthService {
                     token: data.refreshToken.token,
                     exp: data.refreshToken.exp,
                 },
-                user: data.user,
+                user,
             },
             message: 'Login successful',
         };
@@ -103,5 +119,76 @@ export class AuthService {
      */
     async validateUser(payload: JwtPayload): Promise<User> {
         return this.userService.findByEmailAndId(payload.email, payload.sub);
+    }
+
+    /**
+     *
+     * @param {string} userId - The user ID
+     * @param {string} refreshToken - The refresh token
+     * @returns {Promise<UserAuth>} The user entity
+     */
+    async validateRefreshToken(userId: string, refreshToken: string): Promise<UserAuth> {
+        const decodeData = this.jwtService.decode(refreshToken) as JwtPayload;
+
+        const message = 'Invalid token';
+
+        if (!decodeData) {
+            throw new UnauthorizedException(message);
+        }
+
+        const key = `${SESSION_KEY}:${decodeData.sessionId}`;
+        const userData = await this.cacheService.get<UserData>(key);
+
+        if (!userData) {
+            throw new UnauthorizedException(message);
+        }
+
+        if (userData.jwtId !== decodeData.jti) {
+            throw new UnauthorizedException(message);
+        }
+
+        const user = await this.userService.findByEmailAndId(decodeData.email, userId);
+
+        return {
+            ...user,
+            sessionId: decodeData.sessionId,
+        };
+    }
+
+    /**
+     *
+     * @param {UserAuth} currentUser - The current user
+     * @returns {Promise<JwtResponse>} The JWT response
+     */
+    async refresh(currentUser: UserAuth): Promise<any> {
+        const data = await this.jwtService.signTokens({
+            email: currentUser.email,
+            sub: currentUser.id,
+            name: currentUser.name,
+            sessionId: currentUser.sessionId,
+        });
+
+        const key = `${SESSION_KEY}:${currentUser.sessionId}`;
+
+        const userData = await this.cacheService.get<UserData>(key);
+
+        if (!userData) {
+            throw new UnauthorizedException('Invalid token');
+        }
+
+        userData.jwtId = data.refreshToken.jwtId;
+
+        await this.cacheService.update(key, userData, convertTimeStampToSeconds(data.refreshToken.exp));
+
+        return {
+            accessToken: {
+                token: data.accessToken.token,
+                exp: data.accessToken.exp,
+            },
+            refreshToken: {
+                token: data.refreshToken.token,
+                exp: data.refreshToken.exp,
+            },
+        };
     }
 }

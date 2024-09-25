@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
-import fastifyCookie from '@fastify/cookie';
+import fastifyCookie, { FastifyCookieOptions } from '@fastify/cookie';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -34,8 +34,8 @@ async function bootstrap() {
     });
 
     // Use cookie parser middleware
-    await app.register(fastifyCookie, {
-        secret: 'my-secret',
+    await app.register<FastifyCookieOptions>(fastifyCookie, {
+        secret: configService.get<string>('COOKIE_SECRET'),
     });
     // Use compression middleware
     app.use(compression());
@@ -54,6 +54,8 @@ async function bootstrap() {
             },
         }),
     );
+    // Enable CORS
+    app.enableCors();
 
     // Setup Swagger documentation
     setupSwagger(app);

@@ -8,13 +8,14 @@ import { JwtServiceLocal } from './jwt.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { KeyModule } from '../key/key.module';
 import { UserModule } from '../user/user.module';
+import { RefreshStrategy } from './strategies/refresh.strategy';
 
 /**
  *
  */
 @Module({
     imports: [UserModule, JwtModule.register({}), ConfigModule.forRoot({}), KeyModule],
-    providers: [AuthService, JwtServiceLocal, JwtStrategy],
+    providers: [AuthService, JwtServiceLocal, JwtStrategy, RefreshStrategy],
     controllers: [AuthController],
 })
 export class AuthModule {}

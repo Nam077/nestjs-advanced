@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AccessToken, JwtPayload, JwtResponse, KeyType, RefreshToken } from '../../common';
 import { KeyService } from '../key/key.service';
-import { User } from '../user/entities/user.entity';
 
 /**
  *
@@ -27,14 +26,14 @@ export class JwtServiceLocal {
 
     /**
      *
-     * @param {User} user - The user entity
+     * @param {JwtPayload} payload - The payload
      * @returns {string} The access token
      */
-    async signAccessToken(user: User): Promise<AccessToken> {
+    async signAccessToken(payload: JwtPayload): Promise<AccessToken> {
         const jwtPayload: JwtPayload = {
-            sub: user.id,
-            email: user.email,
-            name: user.name,
+            sub: payload.sub,
+            email: payload.email,
+            name: payload.name,
         };
 
         const jwtId = uuidv4();
@@ -57,18 +56,19 @@ export class JwtServiceLocal {
 
     /**
      *
-     * @param {User} user - The payload
+     * @param {JwtPayload} payload - The payload
      * @returns {string} The refresh token
      */
-    async signRefreshToken(user: User): Promise<RefreshToken> {
+    async signRefreshToken(payload: JwtPayload): Promise<RefreshToken> {
         const key = await this.keyService.getCurrentKey(KeyType.REFRESH_KEY);
-        const sessionId = uuidv4();
+
+        payload.sessionId ??= uuidv4();
 
         const jwtPayload: JwtPayload = {
-            sub: user.id,
-            email: user.email,
-            name: user.name,
-            sessionId,
+            sub: payload.sub,
+            email: payload.email,
+            name: payload.name,
+            sessionId: payload.sessionId,
         };
 
         const jwtId = uuidv4();
@@ -85,25 +85,31 @@ export class JwtServiceLocal {
             token,
             exp: this.jwtService.decode(token).exp,
             jwtId,
-            sessionId,
+            sessionId: payload.sessionId,
         };
     }
 
     /**
      *
-     * @param {User} user - the user entity
+     * @param {JwtPayload} payload - The payload
      * @returns {JwtResponse} The JWT response
      */
-    async signTokens(user: User): Promise<JwtResponse> {
-        const accessToken = await this.signAccessToken(user);
-        const refreshToken = await this.signRefreshToken(user);
-
-        delete user.password;
+    async signTokens(payload: JwtPayload): Promise<JwtResponse> {
+        const accessToken = await this.signAccessToken(payload);
+        const refreshToken = await this.signRefreshToken(payload);
 
         return {
-            user,
             accessToken,
             refreshToken,
         };
+    }
+
+    /**
+     * @template T
+     * @param {string} token - The token
+     * @returns {T} The decoded token
+     */
+    decode<T>(token: string): T {
+        return this.jwtService.decode(token) as T;
     }
 }

@@ -1,5 +1,3 @@
-import { User } from '../../modules/user/entities/user.entity';
-
 export interface AccessToken {
     token: string;
     jwtId: string;
@@ -13,7 +11,6 @@ export interface RefreshToken {
     sessionId: string;
 }
 export interface JwtResponse {
-    user: User;
     accessToken: AccessToken;
     refreshToken: RefreshToken;
 }
