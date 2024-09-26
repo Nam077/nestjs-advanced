@@ -1,6 +1,6 @@
 import { Column, Entity, Index } from 'typeorm';
 
-import { BaseEntityCustom, UserRole, hashServiceInstance } from '../../../common';
+import { BaseEntityCustom, UserRole, hashServiceInstance, UserStatus } from '../../../common';
 
 /**
  * @description User entity class for handling user data
@@ -50,6 +50,18 @@ export class User extends BaseEntityCustom {
         comment: `Role of the user`,
     })
     role: UserRole;
+    // isActivated: boolean; // for email activation
+    // status:enum;
+
+    @Column({
+        name: 'status',
+        type: 'enum',
+        enum: UserStatus,
+        default: UserStatus.ACTIVE,
+        nullable: false,
+        comment: `Status of the user`,
+    })
+    status: UserStatus;
 
     //relationship
 
