@@ -1,13 +1,17 @@
-import { Body, Controller, Get, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Details } from 'express-useragent';
-import { FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, UserAuth } from '../../common';
+import { LogoutSessionsDto } from './dtos/logout-sessions.dto';
+import { RegisterDto } from './dtos/register.dto';
+import { ResendEmailDto } from './dtos/resend-email.dto';
+import { TokenDto } from './dtos/token.dto';
 import { RefreshGuard } from './guards/refresh.guard';
 import { EmailAuthProducerService } from '../message-queue-module/producers/email-auth-producer.service';
 
@@ -23,10 +27,7 @@ export class AuthController {
      * @param {AuthService} authService - The auth service instance
      * @param {EmailAuthProducerService} emailAuthProducerService - The email auth producer service instance
      */
-    constructor(
-        private readonly authService: AuthService,
-        private readonly emailAuthProducerService: EmailAuthProducerService,
-    ) {}
+    constructor(private readonly authService: AuthService) {}
 
     /**
      * @param {LoginDto} loginDto - The login data
@@ -57,6 +58,54 @@ export class AuthController {
     }
 
     /**
+     * @param {RegisterDto} registerDto - The register data
+     * @returns {Promise<any>} The login response
+     */
+    @Post('register')
+    async register(@Body() registerDto: RegisterDto): Promise<any> {
+        return await this.authService.register(registerDto);
+    }
+
+    /**
+     *
+     * @param {TokenDto} tokenDto - The token data
+     * @param {Details} ua - The user agent data
+     * @param {GeoIpI} ipGeo - The geo IP data
+     * @param {FastifyReply} response - The Fastify response object
+     * @returns {Promise<any>} The login response
+     */
+    @Get('verify-email')
+    async verifyEmail(
+        @Query() tokenDto: TokenDto,
+        @UserAgentCustom() ua: Details,
+        @GeoIp() ipGeo: GeoIpI,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<any> {
+        const data = await this.authService.verifyEmail(tokenDto.token, ua, ipGeo);
+
+        response.setCookie('refreshToken', data.data.refreshToken.token, {
+            expires: convertTimeStampToDate(data.data.refreshToken.exp),
+            httpOnly: true,
+            path: '/',
+            sameSite: 'strict',
+        });
+
+        delete data.data.refreshToken;
+
+        return data;
+    }
+
+    /**
+     * @param {ResendEmailDto} resendEmailDto - The resend email data
+     * @returns {Promise<any>} The resend email response
+     * @description Resend the verification email
+     */
+    @Post('resend-verification-email')
+    async resendVerificationEmail(@Body() resendEmailDto: ResendEmailDto): Promise<any> {
+        return await this.authService.resendVerificationEmail(resendEmailDto);
+    }
+
+    /**
      * @param {UserAuth} user - The user data from the JWT token
      * @returns {UserAuth} The user data
      */
@@ -64,25 +113,6 @@ export class AuthController {
     @Get('profile')
     profile(@CurrentUser<UserAuth>() user: UserAuth): UserAuth {
         return user;
-    }
-
-    /**
-     * @param {string} email - The email address
-     * @returns {Promise<any>} The response
-     */
-    @Get('profile/:email')
-    async test(@Param('email') email: string): Promise<any> {
-        await this.emailAuthProducerService.sendConfirmationEmail({
-            user: {
-                name: 'Nam Nguyen',
-                email: email,
-                verifyUrl: 'http://localhost:3000/verify',
-            },
-        });
-
-        return {
-            message: 'Email sent',
-        };
     }
 
     /**
@@ -109,5 +139,72 @@ export class AuthController {
         delete data.refreshToken;
 
         return data;
+    }
+
+    /**
+     *
+     * @param {UserAuth} currentUser - The current user
+     * @param {FastifyRequest} request - The Fastify request object
+     * @param {FastifyReply} response - The Fastify response object
+     * @returns {Promise<void>} The logout response
+     */
+    @Get('logout')
+    @UseGuards(JwtAuthGuard)
+    async logout(
+        @CurrentUser<UserAuth>() currentUser: UserAuth,
+        @Req() request: FastifyRequest,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<void> {
+        const refreshToken = request.cookies['refreshToken'];
+        const data = await this.authService.logout(currentUser, refreshToken);
+
+        return response.clearCookie('refreshToken').send({
+            message: data.message,
+        });
+    }
+
+    /**
+     *
+     * @param {UserAuth} currentUser - The current user
+     * @param {FastifyReply} response - The Fastify response object
+     * @returns {Promise<void>} The logout all response
+     */
+    @Get('logout-all')
+    @UseGuards(JwtAuthGuard)
+    async logoutAll(
+        @CurrentUser<UserAuth>() currentUser: UserAuth,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<void> {
+        const data = await this.authService.logoutAll(currentUser);
+
+        return response.clearCookie('refreshToken').send({
+            message: data.message,
+        });
+    }
+
+    /**
+     * @description Get all user sessions
+     * @param {UserAuth} currentUser - The current user
+     * @returns {Promise<any>} The user sessions
+     */
+    @Get('sessions')
+    @UseGuards(JwtAuthGuard)
+    async getUserSessions(@CurrentUser<UserAuth>() currentUser: UserAuth): Promise<any> {
+        return this.authService.getUserSessions(currentUser.id);
+    }
+
+    /**
+     *
+     * @param {UserAuth} currentUser - The current user
+     * @param {LogoutSessionsDto} logoutSessionDto - The logout session data
+     * @returns {Promise<any>} The logout response
+     */
+    @Delete('sessions')
+    @UseGuards(JwtAuthGuard)
+    async logoutSessions(
+        @CurrentUser<UserAuth>() currentUser: UserAuth,
+        @Body() logoutSessionDto: LogoutSessionsDto,
+    ): Promise<any> {
+        return this.authService.logoutSessions(currentUser.id, logoutSessionDto.sessionIds);
     }
 }

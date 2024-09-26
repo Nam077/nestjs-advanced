@@ -29,9 +29,12 @@ export class KeyRotationService {
     async handleCron() {
         await this.keyService.addKeyPair(KeyType.ACCESS_KEY);
         await this.keyService.addKeyPair(KeyType.REFRESH_KEY);
+        await this.keyService.addKeyPair(KeyType.CONFIRMATION_USER_KEY);
+        await this.keyService.addKeyPair(KeyType.RESET_PASSWORD_KEY);
         await this.keyService.removeOldKeys(KeyType.ACCESS_KEY, 31);
         await this.keyService.removeOldKeys(KeyType.REFRESH_KEY, 61);
-
+        await this.keyService.removeOldKeys(KeyType.CONFIRMATION_USER_KEY, 31);
+        await this.keyService.removeOldKeys(KeyType.RESET_PASSWORD_KEY, 31);
         console.log('Key Rotation hoàn tất.');
     }
 }

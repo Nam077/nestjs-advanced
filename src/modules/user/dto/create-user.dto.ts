@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-import { UserRole } from '../../../common';
+import { UserRole, UserStatus } from '../../../common';
 
 /**
  * @description DTO for creating a new user
@@ -42,4 +42,13 @@ export class CreateUserDto {
     @IsEnum(UserRole, { message: 'Invalid user role' })
     @IsNotEmpty({ message: 'Role is required' })
     role: UserRole;
+
+    @ApiProperty({
+        description: 'Status of the user',
+        example: UserStatus.ACTIVE,
+        enum: UserStatus,
+    })
+    @IsEnum(UserStatus, { message: 'Invalid user status' })
+    @IsNotEmpty({ message: 'Status is required' })
+    status? = UserStatus.ACTIVE;
 }
