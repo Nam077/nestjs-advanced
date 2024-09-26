@@ -72,7 +72,13 @@ export class AuthController {
      */
     @Get('profile/:email')
     async test(@Param('email') email: string): Promise<any> {
-        await this.emailAuthProducerService.sendConfirmationEmail(email, 'token');
+        await this.emailAuthProducerService.sendConfirmationEmail({
+            user: {
+                name: 'Nam Nguyen',
+                email: email,
+                verifyUrl: 'http://localhost:3000/verify',
+            },
+        });
 
         return {
             message: 'Email sent',

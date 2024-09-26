@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
+import { EmailConfirmationPayload, EmailResetPasswordPayload } from '../../mail/email.service';
 import { EMAIL_AUTH } from '../rabitmq-config.service';
 
 /**
@@ -17,25 +18,17 @@ export class EmailAuthProducerService {
 
     /**
      *
-     * @param {string} to - The email address to send the email to
-     * @param {string} token - The token to send
+     * @param {EmailConfirmationPayload} payload - The payload
      */
-    async sendConfirmationEmail(to: string, token: string) {
-        await this.amqpConnection.publish(EMAIL_AUTH.EXCHANGE, EMAIL_AUTH.ROUTING.CONFIRM, {
-            to,
-            token,
-        });
+    async sendConfirmationEmail(payload: EmailConfirmationPayload) {
+        await this.amqpConnection.publish(EMAIL_AUTH.EXCHANGE, EMAIL_AUTH.ROUTING.CONFIRM, payload);
     }
 
     /**
      *
-     * @param {string} to - The email address to send the email to
-     * @param {string} token - The token to send
+     * @param {EmailResetPasswordPayload} payload - The payload
      */
-    async sendResetPasswordEmail(to: string, token: string) {
-        await this.amqpConnection.publish(EMAIL_AUTH.EXCHANGE, EMAIL_AUTH.ROUTING.RESET, {
-            to,
-            token,
-        });
+    async sendResetPasswordEmail(payload: EmailResetPasswordPayload) {
+        await this.amqpConnection.publish(EMAIL_AUTH.EXCHANGE, EMAIL_AUTH.ROUTING.RESET, payload);
     }
 }
