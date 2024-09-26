@@ -15,11 +15,12 @@ export class EmailService {
 
     /**
      * Example method
+     * @param {string} to - The email address to send the email to
      * @returns {Promise<void>} - The promise
      */
-    public async example(): Promise<void> {
+    public async example(to: string): Promise<void> {
         return await this.mailerService.sendMail({
-            to: 'namnguyen177a@gmail.com',
+            to: to,
             subject: 'Testing Nest Mailer',
             template: 'welcome',
             context: {

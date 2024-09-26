@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Details } from 'express-useragent';
@@ -9,6 +9,7 @@ import { LoginDto } from './dtos/login.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, UserAuth } from '../../common';
 import { RefreshGuard } from './guards/refresh.guard';
+import { EmailAuthProducerService } from '../message-queue-module/producers/email-auth-producer.service';
 
 /**
  *
@@ -20,8 +21,12 @@ export class AuthController {
     /**
      *
      * @param {AuthService} authService - The auth service instance
+     * @param {EmailAuthProducerService} emailAuthProducerService - The email auth producer service instance
      */
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly emailAuthProducerService: EmailAuthProducerService,
+    ) {}
 
     /**
      * @param {LoginDto} loginDto - The login data
@@ -59,6 +64,19 @@ export class AuthController {
     @Get('profile')
     profile(@CurrentUser<UserAuth>() user: UserAuth): UserAuth {
         return user;
+    }
+
+    /**
+     * @param {string} email - The email address
+     * @returns {Promise<any>} The response
+     */
+    @Get('profile/:email')
+    async test(@Param('email') email: string): Promise<any> {
+        await this.emailAuthProducerService.sendConfirmationEmail(email, 'token');
+
+        return {
+            message: 'Email sent',
+        };
     }
 
     /**
