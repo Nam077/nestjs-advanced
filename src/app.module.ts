@@ -9,6 +9,7 @@ import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { KeyModule } from './modules/key/key.module';
 import { MailModule } from './modules/mail/mail.module';
+import { MessageQueueModuleModule } from './modules/message-queue-module/message-queue-module.module';
 import { SessionModule } from './modules/session/session.module';
 import { UserModule } from './modules/user/user.module';
 import { WinstonModuleConfig } from './modules/winston/winston.module';
@@ -29,6 +30,7 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         KeyModule,
         SessionModule,
         MailModule,
+        MessageQueueModuleModule,
     ],
     controllers: [AppController],
     providers: [AppService],
