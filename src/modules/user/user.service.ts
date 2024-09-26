@@ -15,10 +15,7 @@ import {
     PaginationData,
     CursorData,
     FindOneOptionsCustom,
-    UserRole,
-    UserStatus,
 } from '../../common';
-import { RegisterDto } from '../auth/dtos/register.dto';
 
 /**
  * @class UserService
@@ -387,7 +384,6 @@ export class UserService
                 name: true,
                 role: true,
                 password: true,
-                status: true,
             },
         });
     }
@@ -400,7 +396,7 @@ export class UserService
      */
     async findByEmailAndId(email: string, id: string): Promise<User> {
         return await this.userRepository.findOne({
-            where: { email, id, status: UserStatus.ACTIVE },
+            where: { email, id },
             select: {
                 id: true,
                 email: true,
@@ -408,38 +404,5 @@ export class UserService
                 role: true,
             },
         });
-    }
-
-    /**
-     * @function register - Registers a new user.
-     * @param {RegisterDto} registerDto - The DTO containing the user details.
-     * @returns {Promise<User>} A promise that resolves with the registered user.
-     */
-    async register(registerDto: RegisterDto): Promise<User> {
-        return await this.createHandler({
-            email: registerDto.email,
-            name: registerDto.name,
-            password: registerDto.password,
-            role: UserRole.USER,
-            status: UserStatus.INACTIVE,
-        });
-    }
-
-    /**
-     * @function verifyEmail
-     * @description Verifies a user's email.
-     * @param {string} id - The ID of the user to verify.
-     * @returns {Promise<User>} A promise that resolves with the verified user.
-     */
-    async verifyEmail(id: string): Promise<User> {
-        const user = await this.findOneOrThrow(id);
-
-        if (user.status === UserStatus.ACTIVE) {
-            throw new HttpException('User already verified', HttpStatus.BAD_REQUEST);
-        }
-
-        user.status = UserStatus.ACTIVE;
-
-        return await this.userRepository.save(user);
     }
 }

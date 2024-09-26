@@ -1,5 +1,4 @@
 /* eslint-disable security/detect-object-injection */
-
 import { Injectable } from '@nestjs/common';
 
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -12,7 +11,7 @@ import Redis from 'ioredis';
 export class RedisService {
     /**
      *
-     * @param { Redis } redis - The Redis instance
+     * @param {Redis} redis - The Redis instance
      */
     constructor(@InjectRedis() private readonly redis: Redis) {}
 
@@ -24,19 +23,19 @@ export class RedisService {
      * @param {number} [ttl] - Time to live (optional)
      */
     async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-        const stringValue = JSON.stringify(value);
+        const stringValue = JSON.stringify(value); // Chuyển value thành chuỗi JSON để lưu vào Redis
 
         if (ttl) {
-            await this.redis.set(key, stringValue, 'EX', ttl);
+            await this.redis.set(key, stringValue, 'EX', ttl); // Đặt TTL (thời gian sống)
         } else {
-            await this.redis.set(key, stringValue);
+            await this.redis.set(key, stringValue); // Nếu không có TTL, chỉ lưu key và giá trị
         }
     }
 
     /**
      * Get a value by key from Redis
-     * @template T - The type of the value
      * @param {string} key - Redis key
+     * @template T - The type of the value
      * @returns {Promise<T>} - The value
      */
     async get<T>(key: string): Promise<T> {
@@ -80,147 +79,38 @@ export class RedisService {
         const allData = {};
 
         do {
+            // `SCAN` với cursor và lấy một phần của các key
             const [newCursor, keys] = await this.redis.scan(cursor);
 
             cursor = newCursor;
 
+            // Lấy giá trị của các key đã tìm được
             if (keys.length > 0) {
-                // Sử dụng MGET để lấy tất cả các giá trị của keys
-                const values = await this.redis.mget(...keys);
-
-                // Sử dụng pipeline để lấy TTL của tất cả các keys cùng lúc
-                const pipeline = this.redis.pipeline();
-
-                keys.forEach((key) => pipeline.ttl(key));
-                const ttlResults = await pipeline.exec();
+                const values = await this.redis.mget(...keys); // Lấy giá trị của các key đã quét
 
                 for (let i = 0; i < keys.length; i++) {
+                    const ttl = await this.redis.ttl(keys[i]); // Lấy TTL của mỗi key
+
                     allData[keys[i]] = {
-                        value: values[i],
-                        ttl: ttlResults[i][1], // Kết quả của lệnh TTL trong pipeline
+                        value: values[i], // Giá trị của key
+                        ttl, // TTL của key (thời gian sống còn lại)
                     };
                 }
             }
-        } while (cursor !== '0');
+        } while (cursor !== '0'); // Tiếp tục quét cho đến khi cursor bằng '0'
 
         return allData;
     }
 
     /**
-     * Update a key-value pair in Redis
      * @template T - The type of the value
      * @param {string} key - Redis key
      * @param {T} value - Redis value
      * @param {number} [ttl] - Time to live (optional)
      */
     async update<T>(key: string, value: T, ttl?: number): Promise<void> {
-        const stringValue = JSON.stringify(value);
+        const stringValue = JSON.stringify(value); // Chuyển value thành chuỗi JSON để lưu vào Redis
 
-        await this.redis.set(key, stringValue, 'EX', ttl);
-    }
-
-    // New Functions
-
-    /**
-     * Add an item to a Redis Set
-     * @param {string} key - The Redis key for the set
-     * @param {string} value - The value to add to the set
-     */
-    async sadd(key: string, value: string): Promise<void> {
-        await this.redis.sadd(key, value);
-    }
-
-    /**
-     * Check if a member exists in a Redis Set
-     * @param {string} key - The Redis key for the set
-     * @param {string} member - The member to check for
-     * @returns {Promise<boolean>}
-     */
-    async sismember(key: string, member: string): Promise<boolean> {
-        const result = await this.redis.sismember(key, member);
-
-        return result === 1;
-    }
-
-    /**
-     * Remove an item from a Redis Set
-     * @param {string} key - The Redis key for the set
-     * @param {string} member - The member to remove
-     */
-    async srem(key: string, member: string): Promise<void> {
-        await this.redis.srem(key, member);
-    }
-
-    /**
-     * Get all members of a Redis Set
-     * @param {string} key - The Redis key for the set
-     * @returns {Promise<string[]>}
-     */
-    async smembers(key: string): Promise<string[]> {
-        return this.redis.smembers(key);
-    }
-
-    /**
-     * Add an item to a Redis List (Push to List)
-     * @param {string} key - The Redis key for the list
-     * @param {string} value - The value to push
-     */
-    async lpush(key: string, value: string): Promise<void> {
-        await this.redis.lpush(key, value);
-    }
-
-    /**
-     * Remove and get the first element in a Redis List
-     * @param {string} key - The Redis key for the list
-     * @returns {Promise<string>}
-     */
-    async lpop(key: string): Promise<string> {
-        return this.redis.lpop(key);
-    }
-
-    /**
-     * Get all items from a Redis List
-     * @param {string} key - The Redis key for the list
-     * @param {number} start - The start index (default is 0)
-     * @param {number} stop - The stop index (default is -1 for all)
-     * @returns {Promise<string[]>}
-     */
-    async lrange(key: string, start: number = 0, stop: number = -1): Promise<string[]> {
-        return this.redis.lrange(key, start, stop);
-    }
-
-    /**
-     * Set a TTL (Time to Live) for a specific key
-     * @param {string} key - The Redis key
-     * @param {number} ttl - Time to live in seconds
-     */
-    async expire(key: string, ttl: number): Promise<void> {
-        await this.redis.expire(key, ttl);
-    }
-
-    /**
-     * Get the TTL of a key
-     * @param {string} key - The Redis key
-     * @returns {Promise<number>} The time to live in seconds
-     */
-    async ttl(key: string): Promise<number> {
-        return await this.redis.ttl(key);
-    }
-
-    /**
-     * Increment the value of a key by a given amount
-     * @param {string} key - The Redis key
-     * @param {number} increment - The amount to increment by
-     */
-    async incrby(key: string, increment: number): Promise<void> {
-        await this.redis.incrby(key, increment);
-    }
-
-    /**
-     * Sử dụng pipeline để lấy tất cả các session cùng một lúc
-     * @returns {any} - The pipeline
-     */
-    pipeline(): any {
-        return this.redis.pipeline();
+        await this.redis.set(key, stringValue, 'EX', ttl); // Đặt TTL (thời gian sống)
     }
 }

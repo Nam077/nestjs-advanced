@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
-import { JwtPayload, KeyType } from '../../../common';
+import { JwtPayload } from '../../../common';
 import { KeyService } from '../../key/key.service';
 import { User } from '../../user/entities/user.entity';
 import { AuthService } from '../auth.service';
@@ -66,13 +66,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
                     return done(new UnauthorizedException('Missing kid in token header'), null);
                 }
 
-                const key = await keyService.getKeyById(kid);
+                const secretKey = await keyService.getPulicKeyById(kid);
 
-                if (!key || key.type !== KeyType.ACCESS_KEY) {
-                    return done(new UnauthorizedException('Invalid kid'), null);
-                }
-
-                return done(null, key.publicKey);
+                return done(null, secretKey);
             } catch (error) {
                 return done(error, null);
             }

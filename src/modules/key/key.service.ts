@@ -57,12 +57,7 @@ export class KeyService {
      * @returns {Promise<Key>} The key entity
      */
     async getKeyById(id: string): Promise<Key> {
-        if (!id) {
-            this.logger.error('Key ID is required');
-            throw new Error('Key ID is required');
-        }
-
-        return await this.keyRepository.findOne({ where: { id } });
+        return this.keyRepository.findOne({ where: { id } });
     }
 
     /**

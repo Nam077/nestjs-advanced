@@ -6,7 +6,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { FastifyRequest } from 'fastify';
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
-import { JwtPayload, KeyType, UserAuth } from '../../../common';
+import { JwtPayload, UserAuth } from '../../../common';
 import { KeyService } from '../../key/key.service';
 import { AuthService } from '../auth.service';
 
@@ -64,18 +64,22 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
                     return done(new UnauthorizedException('Missing kid in token header'), null);
                 }
 
-                const key = await keyService.getKeyById(kid);
+                const secretKey = await keyService.getPulicKeyById(kid);
 
-                if (!key || key.type !== KeyType.REFRESH_KEY) {
-                    return done(new UnauthorizedException('Invalid key'), null);
-                }
-
-                return done(null, key.publicKey);
+                return done(null, secretKey);
             } catch (error) {
                 return done(error, null);
             }
         };
     }
+
+    /**
+     *
+     * @param {Request} req - The request object
+     * @param {JwtPayload} payload - The payload
+     * @param {VerifiedCallback} done - The callback function
+     * @returns {Promise<void>} The promise
+     */
 
     /**
      *
