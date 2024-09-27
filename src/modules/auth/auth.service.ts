@@ -364,9 +364,8 @@ export class AuthService {
 
         // Kiểm tra kết quả để chắc chắn rằng các session đã được xóa
         results.forEach((result: [Error | null, any], index: number) => {
-            const [error, res] = result;
-
-            res; // eslint-disable-line no-unused-expressions
+            // eslint-disable-next-line unused-imports/no-unused-vars
+            const [error] = result;
 
             if (error) {
                 console.error(`Error deleting sessionId: ${get(sessionIds, index)}`);
