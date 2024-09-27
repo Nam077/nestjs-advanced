@@ -13,7 +13,6 @@ import { RegisterDto } from './dtos/register.dto';
 import { ResendEmailDto } from './dtos/resend-email.dto';
 import { TokenDto } from './dtos/token.dto';
 import { RefreshGuard } from './guards/refresh.guard';
-import { EmailAuthProducerService } from '../message-queue-module/producers/email-auth-producer.service';
 
 /**
  *
@@ -23,9 +22,7 @@ import { EmailAuthProducerService } from '../message-queue-module/producers/emai
 @Controller('auth')
 export class AuthController {
     /**
-     *
      * @param {AuthService} authService - The auth service instance
-     * @param {EmailAuthProducerService} emailAuthProducerService - The email auth producer service instance
      */
     constructor(private readonly authService: AuthService) {}
 
