@@ -442,4 +442,16 @@ export class UserService
 
         return await this.userRepository.save(user);
     }
+
+    /**
+     *
+     */
+    async resetPassword(id: string, password: string) {
+        const user = await this.findOneOrThrow(id);
+
+        user.password = password;
+        user.hashPassword();
+
+        return await this.userRepository.save(user);
+    }
 }

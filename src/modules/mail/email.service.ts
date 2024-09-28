@@ -17,7 +17,7 @@ export interface EmailResetPasswordPayload {
     user: {
         name: string;
         email: string;
-        verifyUrl: string;
+        resetUrl: string;
     };
 }
 

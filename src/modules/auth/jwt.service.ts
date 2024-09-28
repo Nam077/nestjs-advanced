@@ -169,11 +169,12 @@ export class JwtServiceLocal {
      * Decodes a JWT token.
      * @template T
      * @param {string} token - The JWT token to decode
+     * @param {boolean} complete - Whether to include the complete header in the decoded token
      * @returns {T} The decoded token payload
      */
-    decode<T>(token: string): T {
+    decode<T>(token: string, complete: boolean = true): T {
         return this.jwtService.decode(token, {
-            complete: true,
+            complete: complete,
         }) as T;
     }
 

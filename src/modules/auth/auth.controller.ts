@@ -11,6 +11,8 @@ import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, Us
 import { LogoutSessionsDto } from './dtos/logout-sessions.dto';
 import { RegisterDto } from './dtos/register.dto';
 import { ResendEmailDto } from './dtos/resend-email.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { SendRestPasswordDto } from './dtos/send-reset-password.dto';
 import { TokenDto } from './dtos/token.dto';
 import { RefreshGuard } from './guards/refresh.guard';
 
@@ -203,5 +205,46 @@ export class AuthController {
         @Body() logoutSessionDto: LogoutSessionsDto,
     ): Promise<any> {
         return this.authService.logoutSessions(currentUser.id, logoutSessionDto.sessionIds);
+    }
+
+    /**
+     *
+     * @param {SendRestPasswordDto} sendResetPasswordDto - The send reset password data
+     * @returns {Promise<any>} The send reset password response
+     */
+    @Post('send-reset-password')
+    async sendResetPassword(@Body() sendResetPasswordDto: SendRestPasswordDto): Promise<any> {
+        return this.authService.sendResetPassword(sendResetPasswordDto);
+    }
+
+    /**
+     *
+     * @param {TokenDto} tokenDto - The token data
+     * @param {ResetPasswordDto} resetPasswordDto - The reset password data
+     * @param {Details} ua - The user agent data
+     * @param {GeoIpI} ipGeo - The geo IP data
+     * @param {FastifyReply} response - The Fastify response object
+     * @returns {Promise<any>} The reset password response
+     */
+    @Get('reset-password')
+    async resetPassword(
+        @Query() tokenDto: TokenDto,
+        @Body() resetPasswordDto: ResetPasswordDto,
+        @UserAgentCustom() ua: Details,
+        @GeoIp() ipGeo: GeoIpI,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<any> {
+        const data = await this.authService.resetPassword(tokenDto.token, resetPasswordDto, ua, ipGeo);
+
+        response.setCookie('refreshToken', data.data.refreshToken.token, {
+            expires: convertTimeStampToDate(data.data.refreshToken.exp),
+            httpOnly: true,
+            path: '/',
+            sameSite: 'strict',
+        });
+
+        delete data.data.refreshToken;
+
+        return data;
     }
 }
