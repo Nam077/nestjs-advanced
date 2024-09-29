@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { CacheModule } from './modules/cache/cache.module';
 import { DatabaseModule } from './modules/database/database.module';
+import { I18nModuleLocal } from './modules/i18n/i18n.module';
 import { KeyModule } from './modules/key/key.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MessageQueueModuleModule } from './modules/message-queue-module/message-queue-module.module';
@@ -31,6 +32,7 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         SessionModule,
         MailModule,
         MessageQueueModuleModule,
+        I18nModuleLocal,
     ],
     controllers: [AppController],
     providers: [AppService],

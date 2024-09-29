@@ -1,0 +1,47 @@
+{
+    "validation": {
+        "name": {
+            "description": "User's full name",
+            "isString": "The name should be a valid text. Please enter your name correctly.",
+            "isNotEmpty": "Don't forget to enter your name to proceed!"
+        },
+        "email": {
+            "description": "User's email address",
+            "isEmail": "That doesn't look like a valid email address. Try again, e.g., user@example.com.",
+            "isNotEmpty": "We need your email. Please don't leave this blank."
+        },
+        "password": {
+            "description": "User's password for account security",
+            "isString": "Your password should be in text format. Please enter a valid one.",
+            "isNotEmpty": "A password is needed to keep your account safe.",
+            "minLength": "Make sure your password has at least 6 characters for better security."
+        },
+        "role": {
+            "description": "The role assigned to the user (e.g., admin, user)",
+            "isEnum": "Please select a valid role for the user.",
+            "isNotEmpty": "A user role is required to continue."
+        },
+        "status": {
+            "description": "The current status of the user (e.g., active, inactive)",
+            "isEnum": "Please select a valid status for the user.",
+            "isNotEmpty": "User status is required to manage the account."
+        }
+    },
+    "message": {
+        "findSuccess": "User retrieved successfully!",
+        "findAllSuccess": "Users retrieved successfully!",
+        "createSuccess": "User created successfully! Welcome aboard!",
+        "updateSuccess": "User details updated successfully!",
+        "deleteSuccess": "User deleted successfully!",
+        "hardDeleteSuccess": "User permanently deleted successfully!",
+        "restoreSuccess": "User restored successfully!"
+    },
+    "exception": {
+        "notFound": "No user found with the provided information. Please check again.",
+        "emailAlreadyExists": "This email {email} is already in use. Please choose another one.",
+        "notSoftDeleted": "This user is not soft deleted yet.",
+        "errorDelete": "Can not delete this user, please try again later.",
+        "alreadySoftDeleted": "This user is already soft deleted.",
+        "alreadyVerified": "This user is already verified."
+    }
+}

@@ -1,0 +1,47 @@
+{
+    "validation": {
+        "name": {
+            "description": "Tên đầy đủ của người dùng",
+            "isString": "Tên phải là chữ. Vui lòng nhập tên cho đúng nhé.",
+            "isNotEmpty": "Đừng quên nhập tên để tiếp tục nhé!"
+        },
+        "email": {
+            "description": "Địa chỉ email của người dùng",
+            "isEmail": "Email có vẻ không đúng định dạng. Hãy thử lại, ví dụ: user@example.com.",
+            "isNotEmpty": "Chúng tôi cần email của bạn. Đừng bỏ trống phần này nhé."
+        },
+        "password": {
+            "description": "Mật khẩu của người dùng để bảo vệ tài khoản",
+            "isString": "Mật khẩu phải là dạng văn bản. Vui lòng nhập mật khẩu hợp lệ.",
+            "isNotEmpty": "Mật khẩu giúp bảo vệ tài khoản của bạn, hãy nhập vào nhé.",
+            "minLength": "Mật khẩu cần ít nhất 6 ký tự để đảm bảo an toàn hơn."
+        },
+        "role": {
+            "description": "Vai trò của người dùng (ví dụ: quản trị, người dùng)",
+            "isEnum": "Vui lòng chọn một vai trò người dùng hợp lệ.",
+            "isNotEmpty": "Vai trò người dùng là bắt buộc để tiếp tục."
+        },
+        "status": {
+            "description": "Trạng thái hiện tại của người dùng (ví dụ: đang hoạt động, bị khoá)",
+            "isEnum": "Vui lòng chọn một trạng thái người dùng hợp lệ.",
+            "isNotEmpty": "Trạng thái người dùng là cần thiết để quản lý tài khoản."
+        }
+    },
+    "message": {
+        "findSuccess": "Người dùng được tìm thấy thành công!",
+        "findAllSuccess": "Người dùng được tìm thấy thành công!",
+        "createSuccess": "Tạo người dùng thành công! Chào mừng bạn đến với hệ thống.",
+        "updateSuccess": "Thông tin người dùng đã được cập nhật thành công!",
+        "deleteSuccess": "Xóa người dùng thành công!",
+        "hardDeleteSuccess": "Xóa vĩnh viễn người dùng thành công!",
+        "restoreSuccess": "Khôi phục người dùng thành công!"
+    },
+    "exception": {
+        "notFound": "Không tìm thấy người dùng với thông tin đã nhập. Vui lòng kiểm tra lại nhé.",
+        "emailAlreadyExists": "Email {email} đã được sử dụng. Vui lòng chọn email khác.",
+        "notSoftDeleted": "Người dùng này chưa bị xóa mềm.",
+        "errorDelete": "Không thể xóa người dùng này, vui lòng thử lại sau.",
+        "alreadySoftDeleted": "Người dùng này đã bị xóa mềm.",
+        "alreadyVerified": "Người dùng này đã được xác thực."
+    }
+}

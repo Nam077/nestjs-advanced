@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 import { Details } from 'express-useragent';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 
 import { JwtServiceLocal } from './jwt.service';
 import { UserService } from '../user/user.service';
@@ -22,6 +23,7 @@ import { RegisterDto } from './dtos/register.dto';
 import { ResendEmailDto } from './dtos/resend-email.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { SendRestPasswordDto } from './dtos/send-reset-password.dto';
+import { I18nTranslations } from '../i18n/i18n.generated';
 import { EmailAuthProducerService } from '../message-queue-module/producers/email-auth-producer.service';
 import { User } from '../user/entities/user.entity';
 
@@ -68,12 +70,14 @@ export class AuthService {
      * @param {UserService} userService - The user service.
      * @param {RedisService} cacheService - The cache service.
      * @param {EmailAuthProducerService} emailAuthProducerService - The email producer service.
+     * @param {I18nService<I18nTranslations>} i18nService - The i18n service.
      */
     constructor(
         private readonly jwtService: JwtServiceLocal,
         private readonly userService: UserService,
         private readonly cacheService: RedisService,
         private readonly emailAuthProducerService: EmailAuthProducerService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
 
     /**
@@ -192,7 +196,7 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: 'Login successful',
+            message: this.i18nService.translate('auth.messages.loginSuccess', { lang: I18nContext.current().lang }),
         };
     }
 
@@ -206,7 +210,9 @@ export class AuthService {
         const user = await this.userService.register(registerDto);
 
         if (!user) {
-            throw new BadRequestException('Registration failed. Please try again.');
+            throw new BadRequestException(
+                this.i18nService.translate('auth.exceptions.registrationFailed', { lang: I18nContext.current().lang }),
+            );
         }
 
         const token = await this.jwtService.signConfirmationUserToken({
@@ -218,7 +224,10 @@ export class AuthService {
         await this.sendEmail(user, token.token, 'confirm');
 
         return {
-            message: `User ${user.email} registered successfully. Please check your email for verification.`,
+            message: this.i18nService.translate('auth.messages.registerSuccess', {
+                lang: I18nContext.current().lang,
+                args: { email: user.email },
+            }),
             user,
         };
     }
@@ -234,7 +243,9 @@ export class AuthService {
         const userData = await this.cacheService.get<UserData>(sessionKey);
 
         if (!userData) {
-            throw new UnauthorizedException('Invalid session or session expired');
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.sessionExpired', { lang: I18nContext.current().lang }),
+            );
         }
 
         const tokens = await this.jwtService.signTokens({
@@ -302,7 +313,9 @@ export class AuthService {
         await this.cacheService.srem(userSessionsKey, decoded.sessionId);
         await this.cacheService.del(sessionKey);
 
-        return { message: 'Logout successful' };
+        return {
+            message: this.i18nService.translate('auth.messages.logoutSuccess', { lang: I18nContext.current().lang }),
+        };
     }
 
     /**
@@ -341,7 +354,11 @@ export class AuthService {
     async logoutAll(currentUser: UserAuth): Promise<{ message: string }> {
         await this.logoutAllSessions(currentUser.id);
 
-        return { message: 'All sessions logged out' };
+        return {
+            message: this.i18nService.translate('auth.messages.allSessionsLoggedOut', {
+                lang: I18nContext.current().lang,
+            }),
+        };
     }
 
     /**
@@ -355,11 +372,17 @@ export class AuthService {
     async verifyEmail(token: string, ua: Details, ipGeo: GeoIpI): Promise<LoginResponse> {
         const { isValid, payload } = await this.jwtService.verify<JwtPayload>(token, KeyType.CONFIRMATION_USER_KEY);
 
-        if (!isValid) throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+        if (!isValid)
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
 
         const user = await this.userService.verifyEmail(payload.sub);
 
-        if (!user) throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+        if (!user)
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
@@ -383,7 +406,7 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: 'Login successful',
+            message: this.i18nService.translate('auth.messages.emailVerified', { lang: I18nContext.current().lang }),
         };
     }
 
@@ -432,7 +455,9 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: 'Password reset and login successful',
+            message: this.i18nService.translate('auth.messages.passwordResetSuccess', {
+                lang: I18nContext.current().lang,
+            }),
         };
     }
 
@@ -446,11 +471,15 @@ export class AuthService {
         const user = await this.userService.findByEmail(resendEmailDto.email);
 
         if (!user || user.status === UserStatus.ACTIVE) {
-            throw new BadRequestException('User not found or already verified');
+            throw new BadRequestException(
+                this.i18nService.translate('auth.exceptions.userAlreadyVerified', { lang: I18nContext.current().lang }),
+            );
         }
 
         if (user.status === UserStatus.BLOCKED) {
-            throw new BadRequestException('User is blocked');
+            throw new BadRequestException(
+                this.i18nService.translate('auth.exceptions.userBlocked', { lang: I18nContext.current().lang }),
+            );
         }
 
         const token = await this.jwtService.signConfirmationUserToken({
@@ -461,7 +490,11 @@ export class AuthService {
 
         await this.sendEmail(user, token.token, 'confirm');
 
-        return { message: 'Verification email sent' };
+        return {
+            message: this.i18nService.translate('auth.messages.verificationEmailSent', {
+                lang: I18nContext.current().lang,
+            }),
+        };
     }
 
     /**
@@ -473,7 +506,10 @@ export class AuthService {
     async sendResetPassword(sendResetPasswordDto: SendRestPasswordDto): Promise<MessageResponse> {
         const user = await this.userService.findByEmail(sendResetPasswordDto.email);
 
-        if (!user) throw new NotFoundException('User not found');
+        if (!user)
+            throw new NotFoundException(
+                this.i18nService.translate('auth.exceptions.userNotFound', { lang: I18nContext.current().lang }),
+            );
 
         const token = await this.jwtService.signResetPasswordUserToken({
             email: user.email,
@@ -483,7 +519,11 @@ export class AuthService {
 
         await this.sendEmail(user, token.token, 'reset');
 
-        return { message: 'Reset password email sent' };
+        return {
+            message: this.i18nService.translate('auth.messages.resetPasswordEmailSent', {
+                lang: I18nContext.current().lang,
+            }),
+        };
     }
 
     /**
@@ -509,7 +549,7 @@ export class AuthService {
 
         const sessionResults = await pipeline.exec();
 
-        return sessionResults.map((result) => JSON.parse(result[1])); // Convert results to UserData[]
+        return sessionResults.map((result: string[]) => JSON.parse(result[1])); // Convert results to UserData[]
     }
 
     /**
@@ -521,6 +561,10 @@ export class AuthService {
     async logoutSessions(userId: string, sessionIds: string[]): Promise<{ message: string }> {
         await this.logoutAllSessions(userId, sessionIds);
 
-        return { message: 'Sessions logged out' };
+        return {
+            message: this.i18nService.translate('auth.messages.sessionLoggedOut', {
+                lang: I18nContext.current().lang,
+            }),
+        };
     }
 }
