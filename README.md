@@ -31,8 +31,7 @@ The **nestjs-advanced** project provides a robust and scalable backend solution 
 - **Comprehensive logging** with Winston and daily log rotation.
 
 ## Key Features
-
-- **JWT Authentication** with RSA key pair encryption.
+- **JWT Authentication** with RSA key pair encryption. Add rotation of keys.
 - **Redis for Caching & Session Management**: Fast in-memory storage for managing user sessions and other cacheable data.
 - **RabbitMQ for Message Queuing**: Handles asynchronous task processing, such as sending emails and processing jobs in the background.
 - **Scheduled Cron Jobs**: Automated and recurring tasks using the `@nestjs/schedule` module.
@@ -40,7 +39,18 @@ The **nestjs-advanced** project provides a robust and scalable backend solution 
 - **API Documentation**: Swagger integration for interactive API documentation and exploration.
 - **Fastify**: A high-performance alternative to Express.js for handling HTTP requests.
 - **Winston Logging**: Custom logging setup with daily file rotation using `winston-daily-rotate-file`.
-
+- **Internationalization (i18n)**: Support for multi-language applications.
+- **Conventional Commits**: Enforce consistent commit message formatting.
+- **Husky & Commitlint**: Git hooks for automated pre-commit tasks and conventional commit enforcement.
+- **Jest Testing**: Unit and end-to-end testing with Jest.
+- **ESLint & Prettier**: Code quality and formatting checks.
+- **Docker & Docker Compose**: Containerization and service orchestration.
+- **TypeORM & PostgreSQL**: Database integration with TypeORM and PostgreSQL.
+- **NestJS Config**: Environment-based configuration management.
+- **NestJS Mailer**: Email sending with dynamic templates.
+- **NestJS Schedule**: Cron job scheduling for recurring tasks.
+- **NestJS Swagger**: API documentation with Swagger.
+- **Feature**: Add new features to enhance functionality.
 ## Dependencies Overview
 
 This project includes a wide variety of dependencies, both runtime and development, to enable seamless operations, security, and development productivity:
@@ -110,6 +120,11 @@ Here’s a list of key technologies and libraries used in the project:
 - **Winston**: Provides structured logging with daily file rotation.
 - **Class-validator**: Validation framework for ensuring data integrity in DTOs.
 - **Swagger**: Automatically generates API documentation.
+- **@nestjs/schedule**: Cron job scheduling for recurring tasks.
+- **@nestjs/config**: Environment-based configuration management.
+- **@nestjs/mailer**: Email sending with dynamic templates.
+- **@nestjs/swagger**: API documentation with Swagger.
+- **@nestjs/i18n**: Internationalization support for multi-language apps.
 
 ## Project Setup
 
