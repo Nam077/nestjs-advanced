@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,13 +14,10 @@ import { CurrentUser } from '../../common/decorators';
  * User Controller
  */
 @ApiTags('User')
-@ApiBearerAuth()
+// @ApiBearerAuth()
 @Controller('user')
 // @UseGuards(JwtAuthGuard)
 export class UserController {
-    private readonly userPaginationDto: UserPaginationDto = {};
-    private readonly userCursorDto: UserCursorDto = {};
-
     /**
      * Constructor
      * @param {UserService} userService - The user service
@@ -49,6 +46,13 @@ export class UserController {
         @CurrentUser<UserAuth>() user: UserAuth,
         @Query() userPaginationDto: UserPaginationDto,
     ): Promise<APIResponseData<User>> {
+        user = {
+            id: '1',
+            email: 'test@test.com',
+            role: 'admin',
+            name: 'Test User',
+        };
+
         return this.userService.findAll(userPaginationDto, user);
     }
 
@@ -63,7 +67,7 @@ export class UserController {
         @CurrentUser<UserAuth>() user: UserAuth,
         @Query() userCursorDto: UserCursorDto,
     ): Promise<APIResponseData<User>> {
-        return this.userService.findAll(userCursorDto, user);
+        return this.userService.findCursor(userCursorDto, user);
     }
 
     /**

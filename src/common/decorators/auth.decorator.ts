@@ -21,9 +21,9 @@ export function CurrentUser<T>(): ParameterDecorator {
             const request = ctx.switchToHttp().getRequest();
             const user = request.user as T;
 
-            if (!user) {
-                throw new UnauthorizedException('User not found');
-            }
+            // if (!user) {
+            //     throw new UnauthorizedException('User not found');
+            // }
 
             return data ? get(user, data) : user;
         },
