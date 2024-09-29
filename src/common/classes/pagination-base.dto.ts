@@ -1,23 +1,34 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, Min, Max } from 'class-validator';
 
 import { OrderDirection } from '../enums';
+
+const LIMIT = {
+    MAX: 100,
+    MIN: 1,
+};
+
+const PAGE = {
+    MIN: 1,
+};
 
 /**
  * Pagination data transfer object.
  */
-export abstract class PaginationDto {
-    @IsOptional()
+export abstract class PaginationDtoBase {
     @Type(() => Number)
-    @ApiPropertyOptional({ type: Number, default: 1, description: 'Page number' })
-    page?: number = 1;
+    @Min(PAGE.MIN)
+    @ApiProperty({ type: Number, default: PAGE.MIN, description: 'Page number' })
+    page: number = PAGE.MIN;
 
     @IsOptional()
     @Type(() => Number)
-    @ApiPropertyOptional({ type: Number, default: 10, description: 'Number of items per page' })
-    limit?: number = 10;
+    @Min(LIMIT.MIN)
+    @Max(LIMIT.MAX)
+    @ApiProperty({ type: Number, default: LIMIT.MIN, description: 'Items per page' })
+    limit: number = LIMIT.MIN;
 
     @IsOptional()
     @IsString()
@@ -27,5 +38,5 @@ export abstract class PaginationDto {
     @IsOptional()
     @IsEnum(OrderDirection)
     @ApiPropertyOptional({ enum: OrderDirection, default: OrderDirection.ASC, description: 'Order direction' })
-    orderDirection?: OrderDirection = OrderDirection.ASC;
+    order?: OrderDirection = OrderDirection.ASC;
 }

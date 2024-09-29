@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,6 +17,7 @@ import {
     FindOneOptionsCustom,
     UserRole,
     UserStatus,
+    OrderDirection,
 } from '../../common';
 import { RegisterDto } from '../auth/dtos/register.dto';
 
@@ -133,7 +134,11 @@ export class UserService
     async findAll(paginationDto: UserPaginationDto, userAuth: UserAuth): Promise<APIResponseData<User>> {
         userAuth;
 
-        return Promise.resolve(undefined);
+        return {
+            status: HttpStatus.OK,
+            message: 'Users retrieved successfully!',
+            ...(await this.findAllHandler(paginationDto)),
+        };
     }
 
     /**
@@ -144,10 +149,55 @@ export class UserService
      * @returns {Promise<PaginationData<User>>} A promise that resolves with the paginated list of users.
      */
     async findAllHandler(paginationDto: UserPaginationDto, withDeleted?: boolean): Promise<PaginationData<User>> {
-        paginationDto;
-        withDeleted;
+        const { limit, order, orderBy, page = 1, search } = paginationDto;
 
-        return Promise.resolve(undefined);
+        const query = this.userRepository
+            .createQueryBuilder('user')
+            .select([
+                'user.id',
+                'user.email',
+                'user.name',
+                'user.role',
+                'user.status',
+                'user.createdAt',
+                'user.updatedAt',
+            ])
+            .skip(limit * (page - 1))
+            .take(limit);
+
+        if (orderBy) {
+            query.orderBy(`user.${orderBy}`, order || 'ASC');
+        } else {
+            query.orderBy('user.id', 'ASC');
+        }
+
+        if (search) {
+            query.where('user.name LIKE :search OR user.email LIKE :search', { search: `%${search}%` });
+        }
+
+        if (withDeleted) {
+            query.andWhere(
+                new Brackets((qb) => {
+                    qb.where('user.name LIKE :search', { search: `%${search}%` }).orWhere('user.email LIKE :search', {
+                        search: `%${search}%`,
+                    });
+                }),
+            );
+        }
+
+        const [data, total] = await query.getManyAndCount();
+
+        return {
+            items: data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                nextPage: page * limit < total ? page + 1 : undefined,
+                prevPage: page > 1 ? page - 1 : undefined,
+            },
+        };
     }
 
     /**
@@ -158,10 +208,13 @@ export class UserService
      * @returns {Promise<APIResponseData<User>>} A promise that resolves with the list of users.
      */
     async findCursor(cursorDto: UserCursorDto, userAuth: UserAuth): Promise<APIResponseData<User>> {
-        cursorDto;
         userAuth;
 
-        return Promise.resolve(undefined);
+        return {
+            status: HttpStatus.OK,
+            message: 'Users retrieved successfully!',
+            ...(await this.findCursorHandler(cursorDto)),
+        };
     }
 
     /**
@@ -172,10 +225,49 @@ export class UserService
      * @returns {Promise<CursorData<User>>} A promise that resolves with the cursor-based list of users.
      */
     async findCursorHandler(cursorDto: UserCursorDto, withDeleted?: boolean): Promise<CursorData<User>> {
-        cursorDto;
-        withDeleted;
+        const { cursor, limit, orderDirection, search } = cursorDto;
 
-        return Promise.resolve(undefined);
+        const query = this.userRepository
+            .createQueryBuilder('user')
+            .select([
+                'user.id',
+                'user.email',
+                'user.name',
+                'user.role',
+                'user.status',
+                'user.createdAt',
+                'user.updatedAt',
+            ])
+            .take(limit);
+
+        if (cursor) {
+            if (orderDirection === OrderDirection.DESC) {
+                query.where('user.id < :cursor', { cursor });
+            } else {
+                query.where('user.id > :cursor', { cursor });
+            }
+        }
+
+        query.orderBy('user.id', orderDirection || 'ASC');
+
+        if (search) {
+            query.andWhere('user.name LIKE :search OR user.email LIKE :search', { search: `%${search}%` });
+        }
+
+        if (withDeleted) {
+            query.withDeleted();
+        }
+
+        const data = await query.getMany();
+
+        return {
+            items: data,
+            pagination: {
+                hasMore: data.length === limit,
+                nextCursor: data.length === limit ? data[data.length - 1].id : undefined,
+                prevCursor: cursor,
+            },
+        };
     }
 
     /**
@@ -344,7 +436,6 @@ export class UserService
 
         const { email, password, name, role } = updateDto;
 
-        // Check if email needs to be updated and whether it already exists
         if (email && email !== user.email) {
             const emailExists = await this.isExistByEmail(email);
 

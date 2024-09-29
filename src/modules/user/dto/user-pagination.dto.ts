@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
-import { PaginationDto } from '../../../common';
+import { PaginationDtoBase } from '../../../common';
 
 export enum UserEnumSerchFields {
     ID = 'id',
@@ -21,7 +21,7 @@ export enum UserEnumSerchFields {
  * @augments PaginationDto
  * @property {string} [orderBy] - Order by field.
  */
-export class UserPaginationDto extends PaginationDto {
+export class UserPaginationDto extends PaginationDtoBase {
     @ApiPropertyOptional({ description: 'Order by field', enum: UserEnumSerchFields })
     @IsOptional()
     @IsEnum(UserEnumSerchFields)

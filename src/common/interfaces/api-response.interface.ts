@@ -11,9 +11,9 @@ export interface MultipleDataAPIResponse<ENTITY> extends BaseAPIResponse {
 }
 
 export interface PaginationData<ENTITY> {
-    page: number;
     items: ENTITY[];
     pagination: {
+        page: number;
         limit: number;
         total: number;
         totalPages: number;
