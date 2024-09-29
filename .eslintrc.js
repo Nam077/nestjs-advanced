@@ -4,6 +4,7 @@ module.exports = {
       project: 'tsconfig.json',
       tsconfigRootDir: __dirname,
       sourceType: 'module',
+      extraFileExtensions: ['.json'],
   },
   plugins: ['@typescript-eslint/eslint-plugin', 'import', 'unused-imports', 'sonarjs', 'security', 'jsdoc'],
   extends: [

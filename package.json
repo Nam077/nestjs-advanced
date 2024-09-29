@@ -58,6 +58,7 @@
     "husky": "^9.1.6",
     "ioredis": "^5.4.1",
     "nest-winston": "^1.9.7",
+    "nestjs-i18n": "^10.4.9",
     "nodemailer": "^6.9.15",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -130,7 +131,7 @@
     "testEnvironment": "node"
   },
   "lint-staged": {
-    "src/**/*.{ts,js,json,md}": [
+    "src/**/*.{ts,js,md}": [
       "eslint --fix",
       "prettier --write"
     ]

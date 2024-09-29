@@ -1,13 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
+
+import { I18nTranslations } from '../../i18n/i18n.generated';
 
 /**
- *
+ * @class TokenDto
+ * Data transfer object for providing token.
  */
 export class TokenDto {
-    @IsString({ message: 'Token must be a string' })
-    @IsNotEmpty({ message: 'Token should not be empty' })
+    @IsString({ message: i18nValidationMessage<I18nTranslations>('auth.validation.tokenDto.token.isString') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('auth.validation.tokenDto.token.isNotEmpty') })
     @ApiProperty({
         description: 'The token',
         example:

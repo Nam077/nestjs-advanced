@@ -1,4 +1,4 @@
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -7,6 +7,7 @@ import fastifyCookie, { FastifyCookieOptions } from '@fastify/cookie';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { I18nValidationPipe } from 'nestjs-i18n';
 import * as os from 'os';
 
 import { AppModule } from './app.module';
@@ -45,7 +46,7 @@ async function bootstrap() {
 
     // Use global validation pipes
     app.useGlobalPipes(
-        new ValidationPipe({
+        new I18nValidationPipe({
             transform: true,
             whitelist: true,
             forbidNonWhitelisted: true,

@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { UserRole, UserStatus } from '../../../common';
-
+import { I18nTranslations } from '../../i18n/i18n.generated';
 /**
  * @description DTO for creating a new user
  */
@@ -12,16 +13,16 @@ export class CreateUserDto {
         description: 'Name of the user',
         example: 'John Doe',
     })
-    @IsString({ message: 'Name must be a string' })
-    @IsNotEmpty({ message: 'Name is required' })
+    @IsString({ message: i18nValidationMessage<I18nTranslations>('user.validation.name.isString') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('user.validation.name.isNotEmpty') })
     name: string;
 
     @ApiProperty({
         description: 'Email of the user',
         example: 'user@example.com',
     })
-    @IsEmail({}, { message: 'Invalid email format' })
-    @IsNotEmpty({ message: 'Email is required' })
+    @IsEmail({}, { message: i18nValidationMessage<I18nTranslations>('user.validation.email.isEmail') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('user.validation.email.isNotEmpty') })
     email: string;
 
     @ApiProperty({
@@ -29,9 +30,9 @@ export class CreateUserDto {
         example: 'P@ssw0rd!',
         minLength: 6,
     })
-    @IsString({ message: 'Password must be a string' })
-    @IsNotEmpty({ message: 'Password is required' })
-    @MinLength(6, { message: 'Password must be at least 6 characters long' })
+    @IsString({ message: i18nValidationMessage<I18nTranslations>('user.validation.password.isString') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('user.validation.password.isNotEmpty') })
+    @MinLength(6, { message: i18nValidationMessage<I18nTranslations>('user.validation.password.minLength') })
     password: string;
 
     @ApiProperty({
@@ -39,8 +40,8 @@ export class CreateUserDto {
         example: UserRole.USER,
         enum: UserRole,
     })
-    @IsEnum(UserRole, { message: 'Invalid user role' })
-    @IsNotEmpty({ message: 'Role is required' })
+    @IsEnum(UserRole, { message: i18nValidationMessage<I18nTranslations>('user.validation.role.isEnum') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('user.validation.role.isNotEmpty') })
     role: UserRole;
 
     @ApiProperty({
@@ -48,7 +49,7 @@ export class CreateUserDto {
         example: UserStatus.ACTIVE,
         enum: UserStatus,
     })
-    @IsEnum(UserStatus, { message: 'Invalid user status' })
-    @IsNotEmpty({ message: 'Status is required' })
+    @IsEnum(UserStatus, { message: i18nValidationMessage<I18nTranslations>('user.validation.status.isEnum') })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('user.validation.status.isNotEmpty') })
     status? = UserStatus.ACTIVE;
 }
