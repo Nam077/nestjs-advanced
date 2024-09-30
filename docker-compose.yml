@@ -18,7 +18,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:${APP_PORT}/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:${APP_PORT}/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -43,7 +43,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -61,7 +61,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -70,6 +70,8 @@ services:
   rabbitmq:
     image: rabbitmq:management
     container_name: rabbitmq
+    env_file:
+      - .env.docker
     ports:
       - ${RABBITMQ_PORT}:${RABBITMQ_PORT} # Cổng cho RabbitMQ
       - '15672:15672' # Cổng cho giao diện quản lý
@@ -81,7 +83,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmqctl status"]
+      test: [ "CMD-SHELL", "rabbitmqctl status" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -113,6 +115,7 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+
 
 networks:
   my_network:
