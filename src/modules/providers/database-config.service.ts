@@ -26,8 +26,8 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
             host: this.configService.get<string>('DB_HOST', 'localhost'),
             port: this.configService.get<number>('DB_PORT', 5432),
             username: this.configService.get<string>('DB_USER'),
-            password: this.configService.get<string>('DB_PASSWORD'),
-            database: this.configService.get<string>('DB_DB'),
+            password: this.configService.get<string>('DB_PASS'),
+            database: this.configService.get<string>('DB_NAME'),
             entities: [User, Key],
             synchronize: this.configService.get<string>('NODE_ENV') === 'development', // chỉ bật trong môi trường phát triển
         };
