@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { Observable } from 'rxjs';
 
-import { IS_PUBLIC_KEY } from '../../../common/decorators/auth.decorator';
+import { IS_PUBLIC_KEY } from '@src/common';
 
 /**
  * JwtAuthGuard is responsible for protecting routes using JWT tokens.

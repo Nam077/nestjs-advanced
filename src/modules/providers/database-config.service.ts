@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
-import { Key } from '../../key/entities/key.entity';
-import { User } from '../../user/entities/user.entity';
+import { Key } from '@modules/key/entities/key.entity';
+import { User } from '@modules/user/entities/user.entity';
 
 /**
  * @description Database configuration service for handling database configuration

@@ -1,4 +1,4 @@
-import { ValidationOptions, ValidateIf, registerDecorator, ValidationArguments } from 'class-validator';
+import { registerDecorator, ValidateIf, ValidationArguments, ValidationOptions } from 'class-validator';
 import { get, has } from 'lodash';
 
 /**

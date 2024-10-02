@@ -1,8 +1,8 @@
 import {
-    SingleDataAPIResponse,
+    CursorAPIResponse,
     MultipleDataAPIResponse,
     PaginationAPIResponse,
-    CursorAPIResponse,
+    SingleDataAPIResponse,
 } from '../interfaces/api-response.interface';
 
 export type APIResponseData<ENTITY> =

@@ -1,4 +1,4 @@
-import { hashSync, compareSync } from 'bcryptjs';
+import { compareSync, hashSync } from 'bcryptjs';
 
 /**
  * HashService class

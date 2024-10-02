@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
-import { I18nTranslations } from '../../i18n/i18n.generated';
+import { I18nTranslations } from '@i18n/i18n.generated';
 
 /**
  * @class LogoutSessionsDto

@@ -4,17 +4,17 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Details } from 'express-useragent';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
-import { AuthService } from './auth.service';
-import { LoginDto } from './dtos/login.dto';
-import { JwtAuthGuard } from './guards/jwt.guard';
-import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, UserAuth } from '../../common';
-import { LogoutSessionsDto } from './dtos/logout-sessions.dto';
-import { RegisterDto } from './dtos/register.dto';
-import { ResendEmailDto } from './dtos/resend-email.dto';
-import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { SendRestPasswordDto } from './dtos/send-reset-password.dto';
-import { TokenDto } from './dtos/token.dto';
-import { RefreshGuard } from './guards/refresh.guard';
+import { JwtAuthGuard } from '@guards/jwt.guard';
+import { RefreshGuard } from '@guards/refresh.guard';
+import { AuthService } from '@modules/auth/auth.service';
+import { LoginDto } from '@modules/auth/dtos/login.dto';
+import { LogoutSessionsDto } from '@modules/auth/dtos/logout-sessions.dto';
+import { RegisterDto } from '@modules/auth/dtos/register.dto';
+import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
+import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
+import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
+import { TokenDto } from '@modules/auth/dtos/token.dto';
+import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, UserAuth } from '@src/common';
 
 /**
  *

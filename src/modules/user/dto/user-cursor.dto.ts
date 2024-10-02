@@ -1,9 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsOptional, IsIn, IsEnum } from 'class-validator';
+import { IsEnum, IsIn, IsOptional } from 'class-validator';
+
+import { CursorPaginationDtoBase } from '@src/common';
 
 import { UserEnumSerchFields } from './user-pagination.dto';
-import { CursorPaginationDtoBase } from '../../../common/classes';
 
 /**
  *

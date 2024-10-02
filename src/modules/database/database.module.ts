@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { DatabaseConfigService } from './database-config/database-config.service';
+import { DatabaseConfigService } from '@modules/providers/database-config.service';
 
 /**
  * Database module for handling database configuration

@@ -2,14 +2,14 @@ import 'winston-daily-rotate-file';
 import { Injectable } from '@nestjs/common';
 
 import {
+    utilities as nestWinstonModuleUtilities,
     WinstonModuleOptions,
     WinstonModuleOptionsFactory,
-    utilities as nestWinstonModuleUtilities,
 } from 'nest-winston';
 import * as winston from 'winston';
 import { DailyRotateFile } from 'winston/lib/winston/transports';
 
-import { formatLog } from '../../common';
+import { formatLog } from '@src/common';
 
 export const loggerOptions = {
     transports: [

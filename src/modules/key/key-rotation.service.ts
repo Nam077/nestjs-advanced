@@ -1,26 +1,21 @@
 // key-rotation.service.ts
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { Cron } from '@nestjs/schedule';
 
+import { KeyType } from '@src/common';
+
 import { KeyService } from './key.service';
-import { KeyType } from '../../common';
 
 /**
  * @class KeyRotationService
  * @description The key rotation service that handles the key rotation cron job
- * @exports KeyRotationService
  */
 @Injectable()
 export class KeyRotationService {
     /**
      * @param {KeyService} keyService - The key service
-     * @param {JwtService} jwtService - The JWT service
      */
-    constructor(
-        private keyService: KeyService,
-        private jwtService: JwtService,
-    ) {}
+    constructor(private keyService: KeyService) {}
 
     /**
      * @description The cron job that rotates the keys every month and removes the old keys every month

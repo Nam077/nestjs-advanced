@@ -1,11 +1,21 @@
+/* eslint-disable sonarjs/no-duplicate-string */
+
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 import { Details } from 'express-useragent';
-import { I18nService, I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 
-import { JwtServiceLocal } from './jwt.service';
-import { UserService } from '../user/user.service';
-import { LoginDto } from './dtos/login.dto';
+import { RedisService } from '@cache/cache.service';
+import { I18nTranslations } from '@i18n/i18n.generated';
+import { LoginDto } from '@modules/auth/dtos/login.dto';
+import { RegisterDto } from '@modules/auth/dtos/register.dto';
+import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
+import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
+import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
+import { JwtServiceLocal } from '@modules/auth/jwt.service';
+import { User } from '@modules/user/entities/user.entity';
+import { UserService } from '@modules/user/user.service';
+import { EmailAuthProducerService } from '@rbmq/producers/email-auth-producer.service';
 import {
     AccessToken,
     convertTimeStampToSeconds,
@@ -17,17 +27,7 @@ import {
     SESSION_KEY,
     UserAuth,
     UserStatus,
-} from '../../common';
-import { RedisService } from '../cache/cache.service';
-import { RegisterDto } from './dtos/register.dto';
-import { ResendEmailDto } from './dtos/resend-email.dto';
-import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { SendRestPasswordDto } from './dtos/send-reset-password.dto';
-import { I18nTranslations } from '../i18n/i18n.generated';
-import { EmailAuthProducerService } from '../message-queue-module/producers/email-auth-producer.service';
-import { User } from '../user/entities/user.entity';
-
-const MESSAGE_INVALID_CREDENTIALS = 'Invalid credentials';
+} from '@src/common';
 
 export type TypeSendEmail = 'confirm' | 'reset';
 export interface UserData {
@@ -171,7 +171,9 @@ export class AuthService {
         const user = await this.userService.findByEmail(email);
 
         if (!user || !user.comparePassword(password)) {
-            throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
         }
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
@@ -283,7 +285,10 @@ export class AuthService {
     async validateRefreshToken(userId: string, refreshToken: string): Promise<UserAuth> {
         const decoded = this.jwtService.decode(refreshToken, false) as JwtPayload;
 
-        if (!decoded) throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+        if (!decoded)
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
 
         const sessionKey = this.getSessionKey(decoded.sessionId);
         const userSessionsKey = this.getUserSessionsKey(userId);
@@ -291,7 +296,9 @@ export class AuthService {
         const userData = await this.cacheService.get<UserData>(sessionKey);
 
         if (!isMember || !userData || userData.jwtId !== decoded.jti) {
-            throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
         }
 
         const user = await this.userService.findByEmailAndId(decoded.email, userId);
@@ -427,11 +434,17 @@ export class AuthService {
     ): Promise<LoginResponse> {
         const { isValid, payload } = await this.jwtService.verify<JwtPayload>(token, KeyType.RESET_PASSWORD_KEY);
 
-        if (!isValid) throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+        if (!isValid)
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
 
         const user = await this.userService.resetPassword(payload.sub, resetPasswordDto.password);
 
-        if (!user) throw new UnauthorizedException(MESSAGE_INVALID_CREDENTIALS);
+        if (!user)
+            throw new UnauthorizedException(
+                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
+            );
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 

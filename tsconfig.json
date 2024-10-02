@@ -16,6 +16,15 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@rbmq/*": ["src/modules/message-queue-module/*"],
+      "@i18n/*": ["src/modules/i18n/*"],
+      "@common/*": ["src/common/*"],
+      "@guards/*": ["src/guards/*"],
+      "@modules/*": ["src/modules/*"],
+      "@cache/*": ["src/modules/cache/*"],
+      "@src/*": ["src/*"]
+    }
   }
 }
