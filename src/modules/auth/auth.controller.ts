@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { Details } from 'express-useragent';
 import { FastifyReply, FastifyRequest } from 'fastify';
@@ -61,6 +62,9 @@ export class AuthController {
      * @returns {Promise<any>} The login response
      */
     @Post('register')
+    @Throttle({
+        short: {},
+    })
     async register(@Body() registerDto: RegisterDto): Promise<any> {
         return await this.authService.register(registerDto);
     }

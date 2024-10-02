@@ -20,6 +20,7 @@
     "paths": {
       "@rbmq/*": ["src/modules/message-queue-module/*"],
       "@i18n/*": ["src/modules/i18n/*"],
+      "@providers/*": ["src/modules/providers/*"],
       "@common/*": ["src/common/*"],
       "@guards/*": ["src/guards/*"],
       "@modules/*": ["src/modules/*"],
