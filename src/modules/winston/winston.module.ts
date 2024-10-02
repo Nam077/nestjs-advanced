@@ -7,7 +7,7 @@ import { Module } from '@nestjs/common';
 
 import { WinstonModule } from 'nest-winston';
 
-import { WinstonConfigService } from './winston-config.service';
+import { WinstonConfigService } from '@modules/winston/winston-config.service';
 
 /**
  * The Winston module that provides a wrapper around the Winston logger library.

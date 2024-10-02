@@ -8,8 +8,9 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LessThan, Repository } from 'typeorm';
 import { Logger } from 'winston';
 
+import { KeyType } from '@src/common';
+
 import { Key } from './entities/key.entity';
-import { KeyType } from '../../common';
 
 /**
  *

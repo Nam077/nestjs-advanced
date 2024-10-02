@@ -3,9 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 
 import { RedisModule } from '@nestjs-modules/ioredis';
 
-import { CacheConfigService } from './cache-config/cache-config.service';
-import { RedisService } from './cache.service';
-import { ExampleController } from './example.controller';
+import { CacheConfigService } from '@modules/cache/cache-config/cache-config.service';
+import { RedisService } from '@modules/cache/cache.service';
 
 /**
  *
@@ -19,7 +18,6 @@ import { ExampleController } from './example.controller';
         }),
     ],
     providers: [CacheConfigService, RedisService],
-    controllers: [ExampleController],
     exports: [RedisService],
 })
 export class CacheModule {}

@@ -3,9 +3,9 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { Key } from './entities/key.entity';
-import { KeyRotationService } from './key-rotation.service';
-import { KeyService } from './key.service';
+import { Key } from '@modules/key/entities/key.entity';
+import { KeyRotationService } from '@modules/key/key-rotation.service';
+import { KeyService } from '@modules/key/key.service';
 
 /**
  * @class KeyModule Handles the key module

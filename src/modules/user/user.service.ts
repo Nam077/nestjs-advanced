@@ -11,24 +11,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Brackets, Repository } from 'typeorm';
 
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserCursorDto } from './dto/user-cursor.dto';
-import { UserPaginationDto } from './dto/user-pagination.dto';
-import { User } from './entities/user.entity';
+import { I18nTranslations } from '@i18n/i18n.generated';
+import { RegisterDto } from '@modules/auth/dtos/register.dto';
+import { CreateUserDto } from '@modules/user/dto/create-user.dto';
+import { UpdateUserDto } from '@modules/user/dto/update-user.dto';
+import { UserCursorDto } from '@modules/user/dto/user-cursor.dto';
+import { UserPaginationDto } from '@modules/user/dto/user-pagination.dto';
+import { User } from '@modules/user/entities/user.entity';
 import {
     APIResponseData,
-    IBaseService,
-    UserAuth,
-    PaginationData,
     CursorData,
     FindOneOptionsCustom,
+    IBaseService,
+    OrderDirection,
+    PaginationData,
+    UserAuth,
     UserRole,
     UserStatus,
-    OrderDirection,
-} from '../../common';
-import { RegisterDto } from '../auth/dtos/register.dto';
-import { I18nTranslations } from '../i18n/i18n.generated';
+} from '@src/common';
 
 /**
  * @class UserService

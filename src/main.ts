@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
+// eslint-disable-next-line import/no-named-as-default
 import fastifyCookie, { FastifyCookieOptions } from '@fastify/cookie';
 import * as compression from 'compression';
 import helmet from 'helmet';
@@ -10,8 +11,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import * as os from 'os';
 
-import { AppModule } from './app.module';
-import { setupSwagger } from './common';
+import { AppModule } from '@src/app.module';
+import { setupSwagger } from '@src/common';
 
 /**
  * Bootstrap the NestJS application

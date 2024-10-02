@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 
 /**
  *
@@ -134,7 +134,7 @@ export class RedisService {
      * Check if a member exists in a Redis Set
      * @param {string} key - The Redis key for the set
      * @param {string} member - The member to check for
-     * @returns {Promise<boolean>}
+     * @returns {Promise<boolean>} - Whether the member exists in the set
      */
     async sismember(key: string, member: string): Promise<boolean> {
         const result = await this.redis.sismember(key, member);
@@ -154,7 +154,7 @@ export class RedisService {
     /**
      * Get all members of a Redis Set
      * @param {string} key - The Redis key for the set
-     * @returns {Promise<string[]>}
+     * @returns {Promise<string[]>} - All members of the set
      */
     async smembers(key: string): Promise<string[]> {
         return this.redis.smembers(key);
@@ -172,7 +172,7 @@ export class RedisService {
     /**
      * Remove and get the first element in a Redis List
      * @param {string} key - The Redis key for the list
-     * @returns {Promise<string>}
+     * @returns {Promise<string>} The first element in the list
      */
     async lpop(key: string): Promise<string> {
         return this.redis.lpop(key);
@@ -183,7 +183,7 @@ export class RedisService {
      * @param {string} key - The Redis key for the list
      * @param {number} start - The start index (default is 0)
      * @param {number} stop - The stop index (default is -1 for all)
-     * @returns {Promise<string[]>}
+     * @returns {Promise<string[]>} - All items in the list
      */
     async lrange(key: string, start: number = 0, stop: number = -1): Promise<string[]> {
         return this.redis.lrange(key, start, stop);
@@ -204,7 +204,7 @@ export class RedisService {
      * @returns {Promise<number>} The time to live in seconds
      */
     async ttl(key: string): Promise<number> {
-        return await this.redis.ttl(key);
+        return this.redis.ttl(key);
     }
 
     /**

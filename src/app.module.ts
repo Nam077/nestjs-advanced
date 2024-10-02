@@ -1,19 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { CacheModule } from './modules/cache/cache.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { I18nModuleLocal } from './modules/i18n/i18n.module';
-import { KeyModule } from './modules/key/key.module';
-import { MailModule } from './modules/mail/mail.module';
-import { MessageQueueModuleModule } from './modules/message-queue-module/message-queue-module.module';
-import { SessionModule } from './modules/session/session.module';
-import { UserModule } from './modules/user/user.module';
-import { WinstonModuleConfig } from './modules/winston/winston.module';
+import { CacheModule } from '@cache/cache.module';
+import { I18nModuleLocal } from '@i18n/i18n.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { KeyModule } from '@modules/key/key.module';
+import { MailModule } from '@modules/mail/mail.module';
+import { DatabaseConfigService } from '@modules/providers/database-config.service';
+import { SessionModule } from '@modules/session/session.module';
+import { UserModule } from '@modules/user/user.module';
+import { WinstonModuleConfig } from '@modules/winston/winston.module';
+import { MessageQueueModuleModule } from '@rbmq/message-queue-module.module';
+import { AppController } from '@src/app.controller';
+import { AppService } from '@src/app.service';
+
 /**
  *
  */
@@ -25,7 +27,9 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         ScheduleModule.forRoot(),
         CacheModule,
         WinstonModuleConfig,
-        DatabaseModule,
+        TypeOrmModule.forRootAsync({
+            useClass: DatabaseConfigService,
+        }),
         UserModule,
         AuthModule,
         KeyModule,
@@ -35,6 +39,6 @@ import { WinstonModuleConfig } from './modules/winston/winston.module';
         I18nModuleLocal,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, DatabaseConfigService],
 })
 export class AppModule {}

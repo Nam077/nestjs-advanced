@@ -1,14 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PassportStrategy } from '@nestjs/passport';
 
 import { FastifyRequest } from 'fastify';
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
-import { JwtPayload, KeyType, UserAuth } from '../../../common';
-import { KeyService } from '../../key/key.service';
-import { AuthService } from '../auth.service';
+import { AuthService } from '@modules/auth/auth.service';
+import { KeyService } from '@modules/key/key.service';
+import { JwtPayload, KeyType, UserAuth } from '@src/common';
 
 /**
  *
@@ -20,13 +19,11 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
      * @param {KeyService} keyService - The key service
      * @param {JwtService} jwtService - The JWT service
      * @param {AuthService} authService - The authentication service
-     * @param {ConfigService} configService - The configuration service
      */
     constructor(
         private readonly keyService: KeyService,
         private readonly jwtService: JwtService,
         private readonly authService: AuthService,
-        private readonly configService: ConfigService,
     ) {
         super({
             /**

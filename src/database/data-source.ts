@@ -3,7 +3,7 @@ import 'reflect-metadata';
 
 import { DataSource } from 'typeorm';
 
-import { User } from '../modules/user/entities/user.entity';
+import { User } from '@modules/user/entities/user.entity';
 
 console.log(process.env.POSTGRES_HOST);
 

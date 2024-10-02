@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 
-import { EmailConfirmationPayload, EmailResetPasswordPayload, EmailService } from '../../mail/email.service';
-import { EMAIL_AUTH } from '../rabitmq-config.service';
+import { EmailConfirmationPayload, EmailResetPasswordPayload, EmailService } from '@modules/mail/email.service';
+import { EMAIL_AUTH } from '@modules/message-queue-module/rabitmq-config.service';
 
 /**
  *
