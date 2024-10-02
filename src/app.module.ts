@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CacheModule } from '@cache/cache.module';
@@ -30,6 +31,12 @@ import { AppService } from '@src/app.service';
         TypeOrmModule.forRootAsync({
             useClass: DatabaseConfigService,
         }),
+        ThrottlerModule.forRoot([
+            {
+                ttl: 60000,
+                limit: 10,
+            },
+        ]),
         UserModule,
         AuthModule,
         KeyModule,
@@ -39,6 +46,13 @@ import { AppService } from '@src/app.service';
         I18nModuleLocal,
     ],
     controllers: [AppController],
-    providers: [AppService, DatabaseConfigService],
+    providers: [
+        AppService,
+        DatabaseConfigService,
+        {
+            provide: 'APP_GUARD',
+            useClass: ThrottlerGuard,
+        },
+    ],
 })
 export class AppModule {}
