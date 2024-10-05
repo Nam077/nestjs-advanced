@@ -8,7 +8,7 @@ import fastifyCookie, { FastifyCookieOptions } from '@fastify/cookie';
 import * as compression from 'compression';
 import helmet from 'helmet';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { I18nValidationPipe } from 'nestjs-i18n';
+import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import * as os from 'os';
 
 import { AppModule } from '@src/app.module';
@@ -45,17 +45,18 @@ async function bootstrap() {
     // Use Winston logger
     app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
-    // Use global validation pipes
     app.useGlobalPipes(
         new I18nValidationPipe({
             transform: true,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transformOptions: {
-                enableImplicitConversion: true,
-            },
         }),
     );
+
+    app.useGlobalFilters(
+        new I18nValidationExceptionFilter({
+            errorHttpStatusCode: 422,
+        }),
+    );
+
     // Enable CORS
     app.enableCors();
 

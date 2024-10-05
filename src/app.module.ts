@@ -25,6 +25,8 @@ import { AppService } from '@src/app.service';
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        I18nModuleLocal,
+
         ScheduleModule.forRoot(),
         CacheModule,
         WinstonModuleConfig,
@@ -43,7 +45,6 @@ import { AppService } from '@src/app.service';
         SessionModule,
         MailModule,
         MessageQueueModuleModule,
-        I18nModuleLocal,
     ],
     controllers: [AppController],
     providers: [
