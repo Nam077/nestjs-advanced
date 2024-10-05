@@ -18,7 +18,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:${APP_PORT}/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -32,18 +32,18 @@ services:
         max-file: "5"
 
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: postgres_db
     ports:
-      - '${DB_PORT}:${DB_PORT}'
-    env_file:
-      - .env.docker
+      - '5454:5432' # Changed PostgreSQL port
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
+    env_file:
+      - .env.docker
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - nestjs_advanced_postgres_data:/var/lib/postgresql/data
     networks:
       - my_network
     healthcheck:
@@ -56,12 +56,12 @@ services:
   redis:
     image: redis:alpine
     container_name: redis_cache
-    ports:
-      - '${REDIS_PORT}:6379'
+    ports: 
+      - '6363:6379' # Changed Redis port
     env_file:
       - .env.docker
     volumes:
-      - redis_data:/data
+      - nestjs_advanced_redis_data:/data
     networks:
       - my_network
     healthcheck:
@@ -72,18 +72,18 @@ services:
     restart: always
 
   rabbitmq:
-    image: rabbitmq:management
+    image: rabbitmq:4.0.2-management-alpine
     container_name: rabbitmq
     env_file:
       - .env.docker
     ports:
-      - ${RABBITMQ_PORT}:${RABBITMQ_PORT} # Cổng cho RabbitMQ
-      - '15672:15672' # Cổng cho giao diện quản lý
+      - '5656:5672' # RabbitMQ port remains changed
+      - '15673:15672' # Changed RabbitMQ management interface port
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - nestjs_advanced_rabbitmq_data:/var/lib/rabbitmq
     networks:
       - my_network
     healthcheck:
@@ -97,7 +97,7 @@ services:
     image: redislabs/redisinsight:latest
     container_name: redis_insight
     ports:
-      - '8001:8001' # RedisInsight GUI chạy trên cổng 8001
+      - '8003:8001' # Changed RedisInsight GUI port
     networks:
       - my_network
     depends_on:
@@ -109,17 +109,16 @@ services:
     environment:
       - REDIS_HOSTS=local:redis_cache:6379
     ports:
-      - '8081:8081' # Redis Commander chạy trên cổng 8081
+      - '8082:8081' # Changed Redis Commander UI port
     networks:
       - my_network
     depends_on:
       - redis
 
 volumes:
-  postgres_data:
-  redis_data:
-  rabbitmq_data:
-
+  nestjs_advanced_postgres_data:
+  nestjs_advanced_redis_data:
+  nestjs_advanced_rabbitmq_data:
 
 networks:
   my_network:

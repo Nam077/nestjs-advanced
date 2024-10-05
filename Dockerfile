@@ -16,8 +16,10 @@ COPY . .
 # Build ứng dụng NestJS
 RUN npm run build
 
-# Expose cổng mà ứng dụng sẽ chạy
-EXPOSE 3000
+# Expose cổng mà ứng dụng sẽ chạy từ .env APP_PORT
+ARG APP_PORT
+EXPOSE $APP_PORT
+
 
 # Lệnh để chạy ứng dụng
 CMD ["npm", "run", "start:prod"]
