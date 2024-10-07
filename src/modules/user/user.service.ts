@@ -22,7 +22,7 @@ import {
     UserRole,
     UserStatus,
 } from '@/common';
-import { I18nTranslations } from '@i18n/i18n.generated';
+import { I18nPath, I18nTranslations } from '@i18n/i18n.generated';
 import { RegisterDto } from '@modules/auth/dtos/register.dto';
 import { CreateUserDto } from '@modules/user/dto/create-user.dto';
 import { UpdateUserDto } from '@modules/user/dto/update-user.dto';
@@ -47,6 +47,16 @@ export class UserService
         private readonly userRepository: Repository<User>,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
+    /**
+     *
+     * @param {I18nPath} key - The i18n key.}
+     * @param {Record<string, unknown>} args - The arguments to pass to the translation.
+     * @returns {string} - The translated message.
+     */
+    translateMessage(key: I18nPath, args?: Record<string, unknown>): string {
+        return this.i18nService.translate(key, { lang: I18nContext.current().lang, args });
+    }
 
     /**
      * @function isExistByEmail
@@ -75,7 +85,7 @@ export class UserService
         return {
             status: HttpStatus.CREATED,
             data: user,
-            message: 'User created successfully!',
+            message: this.translateMessage('user.message.createSuccess'),
         };
     }
 
@@ -89,12 +99,7 @@ export class UserService
         const { email } = createDto;
 
         if (await this.isExistByEmail(email)) {
-            throw new ConflictException(
-                this.i18nService.translate('user.exception.emailAlreadyExists', {
-                    args: { email },
-                    lang: I18nContext.current().lang,
-                }),
-            );
+            throw new ConflictException(this.translateMessage('user.exception.emailAlreadyExists', { email }));
         }
 
         const user = this.userRepository.create(createDto);
@@ -121,7 +126,7 @@ export class UserService
         return {
             status: HttpStatus.OK,
             data: user,
-            message: this.i18nService.translate('user.message.deleteSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.deleteSuccess'),
         };
     }
 
@@ -151,7 +156,7 @@ export class UserService
 
         return {
             status: HttpStatus.OK,
-            message: this.i18nService.translate('user.message.findAllSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.findAllSuccess'),
             ...(await this.findAllHandler(paginationDto)),
         };
     }
@@ -227,7 +232,7 @@ export class UserService
 
         return {
             status: HttpStatus.OK,
-            message: this.i18nService.translate('user.message.findAllSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.findAllSuccess'),
             ...(await this.findCursorHandler(cursorDto)),
         };
     }
@@ -299,7 +304,7 @@ export class UserService
         return {
             status: HttpStatus.OK,
             data: user,
-            message: this.i18nService.translate('user.message.findSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.findSuccess'),
         };
     }
 
@@ -331,9 +336,7 @@ export class UserService
         const user = await this.findOneHandler(id, options, withDeleted);
 
         if (!user) {
-            throw new NotFoundException(
-                this.i18nService.translate('user.exception.notFound', { lang: I18nContext.current().lang }),
-            );
+            throw new NotFoundException(this.translateMessage('user.exception.notFound'));
         }
 
         return user;
@@ -353,7 +356,7 @@ export class UserService
         return {
             status: HttpStatus.OK,
             data: user,
-            message: this.i18nService.translate('user.message.restoreSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.restoreSuccess'),
         };
     }
 
@@ -367,9 +370,7 @@ export class UserService
         const user = await this.findOneOrThrow(id, undefined, true);
 
         if (!user.deletedAt) {
-            throw new BadRequestException(
-                this.i18nService.translate('user.exception.notSoftDeleted', { lang: I18nContext.current().lang }),
-            );
+            throw new BadRequestException(this.translateMessage('user.exception.notSoftDeleted'));
         }
 
         user.deletedAt = null;
@@ -393,7 +394,7 @@ export class UserService
         return {
             status: HttpStatus.OK,
             data: user,
-            message: this.i18nService.translate('user.message.deleteSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.hardDeleteSuccess'),
         };
     }
 
@@ -407,9 +408,7 @@ export class UserService
         const user = await this.findOneOrThrow(id);
 
         if (user.deletedAt) {
-            throw new BadRequestException(
-                this.i18nService.translate('user.exception.alreadySoftDeleted', { lang: I18nContext.current().lang }),
-            );
+            throw new BadRequestException(this.translateMessage('user.exception.alreadySoftDeleted'));
         }
 
         await this.userRepository.softDelete(id);
@@ -441,7 +440,7 @@ export class UserService
         return {
             status: HttpStatus.OK,
             data: user,
-            message: this.i18nService.translate('user.message.updateSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('user.message.updateSuccess'),
         };
     }
 
@@ -461,12 +460,7 @@ export class UserService
             const emailExists = await this.isExistByEmail(email);
 
             if (emailExists) {
-                throw new ConflictException(
-                    this.i18nService.translate('user.exception.emailAlreadyExists', {
-                        args: { email },
-                        lang: I18nContext.current().lang,
-                    }),
-                );
+                throw new ConflictException(this.translateMessage('user.exception.emailAlreadyExists', { email }));
             }
 
             user.email = email;
@@ -553,7 +547,7 @@ export class UserService
 
         if (user.status === UserStatus.ACTIVE) {
             throw new BadRequestException(
-                this.i18nService.translate('user.exception.alreadyVerified', { lang: I18nContext.current().lang }),
+                this.translateMessage('user.exception.alreadyVerified', { email: user.email }),
             );
         }
 

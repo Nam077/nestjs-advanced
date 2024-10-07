@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 import { Details } from 'express-useragent';
@@ -18,7 +17,7 @@ import {
     UserStatus,
 } from '@/common';
 import { RedisService } from '@cache/cache.service';
-import { I18nTranslations } from '@i18n/i18n.generated';
+import { I18nPath, I18nTranslations } from '@i18n/i18n.generated';
 import { LoginDto } from '@modules/auth/dtos/login.dto';
 import { RegisterDto } from '@modules/auth/dtos/register.dto';
 import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
@@ -52,6 +51,16 @@ export class AuthService {
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly sessionService: SessionService,
     ) {}
+
+    /**
+     *
+     * @param {I18nPath} key - The i18n key.}
+     * @param {Record<string, unknown>} args - The arguments to pass to the translation.
+     * @returns {string} - The translated message.
+     */
+    translateMessage(key: I18nPath, args?: Record<string, unknown>): string {
+        return this.i18nService.translate(key, { lang: I18nContext.current().lang, args });
+    }
 
     /**
      * Helper function to send email.
@@ -137,9 +146,7 @@ export class AuthService {
         const user = await this.userService.findByEmail(email);
 
         if (!user || !user.comparePassword(password)) {
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+            throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
         }
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
@@ -155,7 +162,7 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: this.i18nService.translate('auth.messages.loginSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('auth.messages.loginSuccess'),
         };
     }
 
@@ -183,10 +190,7 @@ export class AuthService {
         await this.sendEmail(user, token.token, 'confirm');
 
         return {
-            message: this.i18nService.translate('auth.messages.registerSuccess', {
-                lang: I18nContext.current().lang,
-                args: { email: user.email },
-            }),
+            message: this.translateMessage('auth.messages.registerSuccess', { email: user.email }),
             user,
         };
     }
@@ -201,9 +205,7 @@ export class AuthService {
         const userData = await this.sessionService.getUserSession(currentUser.sessionId);
 
         if (!userData) {
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.sessionExpired', { lang: I18nContext.current().lang }),
-            );
+            throw new UnauthorizedException(this.translateMessage('auth.exceptions.sessionExpired'));
         }
 
         const tokens = await this.jwtService.signTokens({
@@ -220,7 +222,7 @@ export class AuthService {
                 accessToken: { token: tokens.accessToken.token, exp: tokens.accessToken.exp },
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
             },
-            message: this.i18nService.translate('auth.messages.refreshSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('auth.messages.refreshSuccess'),
         };
     }
 
@@ -234,17 +236,12 @@ export class AuthService {
     async validateRefreshToken(userId: string, refreshToken: string): Promise<UserAuth> {
         const decoded = this.jwtService.decode(refreshToken, false) as JwtPayload;
 
-        if (!decoded)
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+        if (!decoded) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
 
         const isValid = await this.sessionService.validateSession(decoded.sessionId, userId);
 
         if (!isValid) {
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+            throw new UnauthorizedException(this.translateMessage('auth.exceptions.sessionExpired'));
         }
 
         const user = await this.userService.findByEmailAndId(decoded.email, userId);
@@ -264,7 +261,7 @@ export class AuthService {
         await this.sessionService.removeSession(decoded.sessionId);
 
         return {
-            message: this.i18nService.translate('auth.messages.logoutSuccess', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('auth.messages.logoutSuccess'),
         };
     }
 
@@ -277,9 +274,7 @@ export class AuthService {
         await this.sessionService.removeAllSessions(currentUser.id);
 
         return {
-            message: this.i18nService.translate('auth.messages.allSessionsLoggedOut', {
-                lang: I18nContext.current().lang,
-            }),
+            message: this.translateMessage('auth.messages.allSessionsLoggedOut'),
         };
     }
 
@@ -294,17 +289,11 @@ export class AuthService {
     async verifyEmail(token: string, ua: Details, ipGeo: GeoIpI): Promise<LoginResponse> {
         const { isValid, payload } = await this.jwtService.verify<JwtPayload>(token, KeyType.CONFIRMATION_USER_KEY);
 
-        if (!isValid)
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+        if (!isValid) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
 
         const user = await this.userService.verifyEmail(payload.sub);
 
-        if (!user)
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+        if (!user) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
@@ -319,7 +308,7 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: this.i18nService.translate('auth.messages.emailVerified', { lang: I18nContext.current().lang }),
+            message: this.translateMessage('auth.messages.emailVerified'),
         };
     }
 
@@ -340,17 +329,11 @@ export class AuthService {
     ): Promise<LoginResponse> {
         const { isValid, payload } = await this.jwtService.verify<JwtPayload>(token, KeyType.RESET_PASSWORD_KEY);
 
-        if (!isValid)
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+        if (!isValid) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
 
         const user = await this.userService.resetPassword(payload.sub, resetPasswordDto.password);
 
-        if (!user)
-            throw new UnauthorizedException(
-                this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
-            );
+        if (!user) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
@@ -365,9 +348,7 @@ export class AuthService {
                 refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
                 user,
             },
-            message: this.i18nService.translate('auth.messages.passwordResetSuccess', {
-                lang: I18nContext.current().lang,
-            }),
+            message: this.translateMessage('auth.messages.passwordResetSuccess'),
         };
     }
 
@@ -381,15 +362,11 @@ export class AuthService {
         const user = await this.userService.findByEmail(resendEmailDto.email);
 
         if (!user || user.status === UserStatus.ACTIVE) {
-            throw new BadRequestException(
-                this.i18nService.translate('auth.exceptions.userAlreadyVerified', { lang: I18nContext.current().lang }),
-            );
+            throw new BadRequestException(this.translateMessage('auth.exceptions.userAlreadyVerified'));
         }
 
         if (user.status === UserStatus.BLOCKED) {
-            throw new BadRequestException(
-                this.i18nService.translate('auth.exceptions.userBlocked', { lang: I18nContext.current().lang }),
-            );
+            throw new BadRequestException(this.translateMessage('auth.exceptions.userBlocked'));
         }
 
         const token = await this.jwtService.signConfirmationUserToken({
@@ -401,9 +378,7 @@ export class AuthService {
         await this.sendEmail(user, token.token, 'confirm');
 
         return {
-            message: this.i18nService.translate('auth.messages.verificationEmailSent', {
-                lang: I18nContext.current().lang,
-            }),
+            message: this.translateMessage('auth.messages.verificationEmailSent'),
         };
     }
 
@@ -416,10 +391,7 @@ export class AuthService {
     async sendResetPassword(sendResetPasswordDto: SendRestPasswordDto): Promise<MessageResponse> {
         const user = await this.userService.findByEmail(sendResetPasswordDto.email);
 
-        if (!user)
-            throw new NotFoundException(
-                this.i18nService.translate('auth.exceptions.userNotFound', { lang: I18nContext.current().lang }),
-            );
+        if (!user) throw new NotFoundException(this.translateMessage('auth.exceptions.userNotFound'));
 
         const token = await this.jwtService.signResetPasswordUserToken({
             email: user.email,
@@ -430,9 +402,7 @@ export class AuthService {
         await this.sendEmail(user, token.token, 'reset');
 
         return {
-            message: this.i18nService.translate('auth.messages.resetPasswordEmailSent', {
-                lang: I18nContext.current().lang,
-            }),
+            message: this.translateMessage('auth.messages.resetPasswordEmailSent'),
         };
     }
 
@@ -455,9 +425,7 @@ export class AuthService {
         await this.sessionService.removeAllSessions(userId, sessionIds);
 
         return {
-            message: this.i18nService.translate('auth.messages.sessionLoggedOut', {
-                lang: I18nContext.current().lang,
-            }),
+            message: this.translateMessage('auth.messages.sessionLoggedOut'),
         };
     }
 }
