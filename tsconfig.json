@@ -18,7 +18,9 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@rbmq/*": ["src/modules/message-queue-module/*"],
+      "@rbmq/*": ["src/modules/message-queue/*"],
+      "@producers/*": ["src/modules/message-queue/producers/*"],
+      "@consumers/*": ["src/modules/message-queue/consumers/*"],
       "@i18n/*": ["src/modules/i18n/*"],
       "@providers/*": ["src/modules/providers/*"],
       "@common/*": ["src/common/*"],

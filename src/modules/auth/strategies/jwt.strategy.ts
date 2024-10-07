@@ -6,10 +6,9 @@ import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
 import { JwtPayload, KeyType } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
+import { TokenCacheService } from '@modules/auth/token-cache.service';
 import { KeyService } from '@modules/key/key.service';
 import { User } from '@modules/user/entities/user.entity';
-
-import { TokenCacheService } from '../token-cache.service';
 
 /**
  *

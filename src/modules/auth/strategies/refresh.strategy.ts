@@ -7,9 +7,8 @@ import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
 import { JwtPayload, KeyType, UserAuth } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
+import { TokenCacheService } from '@modules/auth/token-cache.service';
 import { KeyService } from '@modules/key/key.service';
-
-import { TokenCacheService } from '../token-cache.service';
 
 /**
  * Strategy for handling refresh tokens using JWT and Passport.
