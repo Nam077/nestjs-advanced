@@ -27,6 +27,10 @@ export class RedisService {
         const stringValue = JSON.stringify(value);
 
         if (ttl) {
+            if (ttl <= 0) {
+                return;
+            }
+
             await this.redis.set(key, stringValue, 'EX', ttl);
         } else {
             await this.redis.set(key, stringValue);
@@ -114,21 +118,6 @@ export class RedisService {
 
         return allData;
     }
-
-    /**
-     * Update a key-value pair in Redis
-     * @template T - The type of the value
-     * @param {string} key - Redis key
-     * @param {T} value - Redis value
-     * @param {number} [ttl] - Time to live (optional)
-     */
-    async update<T>(key: string, value: T, ttl?: number): Promise<void> {
-        const stringValue = JSON.stringify(value);
-
-        await this.redis.set(key, stringValue, 'EX', ttl);
-    }
-
-    // New Functions
 
     /**
      * Add an item to a Redis Set

@@ -29,7 +29,7 @@ export class EmailAuthConsumerService {
             messageTtl: 1000 * 60 * 5, // 5 minutes
         },
     })
-    public async handleConfirmationEmail(payload: EmailConfirmationPayload) {
+    public async handleConfirmationEmail(payload: EmailConfirmationPayload): Promise<void> {
         await this.emailService.sendEmailConfirmation(payload);
     }
 
