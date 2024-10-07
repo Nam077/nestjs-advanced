@@ -25,11 +25,10 @@ import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
 import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
 import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
 import { JwtServiceLocal } from '@modules/auth/jwt.service';
+import { SessionService, UserData } from '@modules/auth/session.service';
 import { EmailAuthProducerService } from '@modules/message-queue/producers/email-auth-producer.service';
 import { User } from '@modules/user/entities/user.entity';
 import { UserService } from '@modules/user/user.service';
-
-import { SessionService } from './session.service';
 
 /**
  *
