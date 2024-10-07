@@ -24,7 +24,7 @@ import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
 import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
 import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
 import { JwtServiceLocal } from '@modules/auth/jwt.service';
-import { SessionService, UserData } from '@modules/auth/session.service';
+import { SessionService, SessionData, TokenValidationType } from '@modules/auth/session.service';
 import { User } from '@modules/user/entities/user.entity';
 import { UserService } from '@modules/user/user.service';
 import { EmailAuthProducerService } from '@producers/email-auth-producer.service';
@@ -106,6 +106,12 @@ export class AuthService {
      * @returns {Promise<User>} - The validated user.
      */
     async validateUser(payload: JwtPayload): Promise<User> {
+        const dataSession: SessionData = await this.cacheService.get(payload.sessionId);
+
+        if (!dataSession || dataSession.jwtAccessId !== payload.jti) {
+            throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
+        }
+
         return this.userService.findByEmailAndId(payload.email, payload.sub);
     }
 
@@ -115,9 +121,9 @@ export class AuthService {
      * @param {Details} ua - The user agent data.
      * @param {User} user - The user entity.
      * @param {JwtResponse} jwtResponse - The JWT tokens.
-     * @returns {UserData} - The user data to store in Redis.
+     * @returns {SessionData} - The user data to store in Redis.
      */
-    createUserData(ipGeo: GeoIpI, ua: Details, user: User, jwtResponse: JwtResponse): UserData {
+    createUserData(ipGeo: GeoIpI, ua: Details, user: User, jwtResponse: JwtResponse): SessionData {
         return {
             ip: ipGeo.ip,
             userAgent: ua.source,
@@ -153,7 +159,7 @@ export class AuthService {
 
         const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
+        await this.sessionService.createNewSession(userData);
         delete user.password;
 
         return {
@@ -202,7 +208,7 @@ export class AuthService {
      * @throws {UnauthorizedException} - If session is invalid or expired.
      */
     async refresh(currentUser: UserAuth): Promise<LoginResponse> {
-        const userData = await this.sessionService.getUserSession(currentUser.sessionId);
+        const userData = await this.sessionService.getSessionById(currentUser.sessionId);
 
         if (!userData) {
             throw new UnauthorizedException(this.translateMessage('auth.exceptions.sessionExpired'));
@@ -215,7 +221,12 @@ export class AuthService {
             sessionId: currentUser.sessionId,
         });
 
-        await this.sessionService.updateSessionAndAddToWhitelist(userData, tokens.refreshToken, tokens.accessToken);
+        userData.jwtAccessId = tokens.accessToken.jwtId;
+        userData.expAcc = tokens.accessToken.exp;
+        userData.jwtRefreshId = tokens.refreshToken.jwtId;
+        userData.expRef = tokens.refreshToken.exp;
+
+        await this.sessionService.updateSession(userData);
 
         return {
             data: {
@@ -228,25 +239,21 @@ export class AuthService {
 
     /**
      * Validates a refresh token.
-     * @param {string} userId - The user ID.
-     * @param {string} refreshToken - The refresh token.
+     * @param {JwtPayload} jwtPayload - The JWT payload.
+     * @param {TokenValidationType} tokenValidationType - The type of token to validate.
      * @returns {Promise<UserAuth>} - The validated user.
      * @throws {UnauthorizedException} - If validation fails.
      */
-    async validateRefreshToken(userId: string, refreshToken: string): Promise<UserAuth> {
-        const decoded = this.jwtService.decode(refreshToken, false) as JwtPayload;
-
-        if (!decoded) throw new UnauthorizedException(this.translateMessage('auth.exceptions.invalidCredentials'));
-
-        const isValid = await this.sessionService.validateSession(decoded.sessionId, userId);
+    async validatePayload(jwtPayload: JwtPayload, tokenValidationType: TokenValidationType): Promise<UserAuth> {
+        const isValid = await this.sessionService.validateSession(jwtPayload, tokenValidationType);
 
         if (!isValid) {
             throw new UnauthorizedException(this.translateMessage('auth.exceptions.sessionExpired'));
         }
 
-        const user = await this.userService.findByEmailAndId(decoded.email, userId);
+        const user = await this.userService.findByEmailAndId(jwtPayload.email, jwtPayload.sub);
 
-        return { ...user, sessionId: decoded.sessionId };
+        return { ...user, sessionId: jwtPayload.sessionId };
     }
 
     /**
@@ -299,7 +306,7 @@ export class AuthService {
 
         const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
+        await this.sessionService.createNewSession(userData);
         delete user.password;
 
         return {
@@ -339,7 +346,7 @@ export class AuthService {
 
         const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
+        await this.sessionService.createNewSession(userData);
         delete user.password;
 
         return {
@@ -409,9 +416,9 @@ export class AuthService {
     /**
      * Gets all active sessions for a user.
      * @param {string} userId - The user ID.
-     * @returns {Promise<UserData[]>} - The list of user sessions.
+     * @returns {Promise<SessionData[]>} - The list of user sessions.
      */
-    async getUserSessions(userId: string): Promise<UserData[]> {
+    async getUserSessions(userId: string): Promise<SessionData[]> {
         return await this.sessionService.getAllSessions(userId);
     }
 

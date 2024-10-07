@@ -7,7 +7,6 @@ import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
 import { JwtPayload, KeyType, UserAuth } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
-import { TokenCacheService } from '@modules/auth/token-cache.service';
 import { KeyService } from '@modules/key/key.service';
 
 /**
@@ -22,13 +21,11 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
      * @param {KeyService} keyService - The key service for fetching cryptographic keys.
      * @param {JwtService} jwtService - The JWT service for decoding and verifying tokens.
      * @param {AuthService} authService - The authentication service for validating tokens.
-     * @param {TokenCacheService} tokenCacheService - The cache service for token operations.
      */
     constructor(
         private readonly keyService: KeyService,
         private readonly jwtService: JwtService,
         private readonly authService: AuthService,
-        private readonly tokenCacheService: TokenCacheService,
     ) {
         super({
             /**
@@ -88,9 +85,7 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
             throw new UnauthorizedException('Missing refresh token');
         }
 
-        await this.tokenCacheService.validateTokenInCache(jwtPayload.jti);
-
-        const user = await this.authService.validateRefreshToken(jwtPayload.sub, refreshToken);
+        const user = await this.authService.validatePayload(jwtPayload, 'refresh');
 
         if (!user) {
             throw new UnauthorizedException('Invalid token');

@@ -35,6 +35,7 @@ export class JwtServiceLocal {
             sub: payload.sub,
             email: payload.email,
             name: payload.name,
+            sessionId: payload.sessionId,
         };
 
         const jwtId = uuidv4();
@@ -156,8 +157,12 @@ export class JwtServiceLocal {
      * @returns {Promise<JwtResponse>} A promise that resolves with both the signed access and refresh tokens
      */
     async signTokens(payload: JwtPayload): Promise<JwtResponse> {
-        const accessToken = await this.signAccessToken(payload);
         const refreshToken = await this.signRefreshToken(payload);
+
+        const accessToken = await this.signAccessToken({
+            ...payload,
+            sessionId: refreshToken.sessionId,
+        });
 
         return {
             accessToken,

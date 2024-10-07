@@ -4,11 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
-import { JwtPayload, KeyType } from '@/common';
+import { JwtPayload, KeyType, UserAuth } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
-import { TokenCacheService } from '@modules/auth/token-cache.service';
 import { KeyService } from '@modules/key/key.service';
 import { User } from '@modules/user/entities/user.entity';
+
+import { SessionService } from '../session.service';
 
 /**
  *
@@ -20,13 +21,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
      * @param {KeyService} keyService - The key service
      * @param {JwtService} jwtService - The JWT service
      * @param {AuthService} authService - The authentication service
-     * @param {TokenCacheService} tokenCacheService - The token cache service
+     * @param {SessionService} sessionService - The session service
      */
     constructor(
         private readonly keyService: KeyService,
         private readonly jwtService: JwtService,
         private readonly authService: AuthService,
-        private readonly tokenCacheService: TokenCacheService,
     ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -40,14 +40,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
      * @param {JwtPayload} payload - The payload
      * @returns {Promise<User>} The user entity
      */
-    async validate(payload: JwtPayload): Promise<User> {
-        const user = await this.authService.validateUser(payload);
+    async validate(payload: JwtPayload): Promise<UserAuth> {
+        const user = await this.authService.validatePayload(payload, 'access');
 
         if (!user) {
             throw new UnauthorizedException('Invalid token');
         }
-
-        await this.tokenCacheService.validateTokenInCache(payload.jti);
 
         return user;
     }

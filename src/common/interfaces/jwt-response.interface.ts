@@ -2,6 +2,7 @@ export interface AccessToken {
     token: string;
     jwtId: string;
     exp: number;
+    sessionId?: string;
 }
 
 export interface RefreshToken {

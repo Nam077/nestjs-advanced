@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import { BLACKLIST_KEY, SESSION_KEY, WHITELIST_KEY } from '@common/constants';
 import { convertTimeStampToSeconds } from '@common/helpers';
-import { AccessToken, RefreshToken } from '@common/interfaces';
+import { JwtPayload } from '@common/interfaces';
 import { RedisService } from '@modules/cache/cache.service';
 
-export interface UserData {
+export interface SessionData {
     ip: string;
     userAgent: string;
     userId: string;
@@ -22,6 +22,8 @@ export enum SecurityKeyType {
     BLACKLIST_KEY = 'blacklist',
     WHITELIST_KEY = 'whitelist',
 }
+
+export type TokenValidationType = 'access' | 'refresh';
 
 interface JWTTokenCache {
     jti: string;
@@ -152,12 +154,12 @@ export class SessionService {
 
     /**
      *
-     * @param {UserData} userData - The user data to store
+     * @param {SessionData} userData - The user data to store
      * @param {string} sessionId - The session ID
      * @param {number} exp - The time-to-live for the session
      * @returns {Promise<void>} Resolves when the session is stored
      */
-    async storeSession(userData: UserData, sessionId: string, exp: number): Promise<void> {
+    async storeSession(userData: SessionData, sessionId: string, exp: number): Promise<void> {
         const sessionKey = this.getSessionKey(sessionId);
         const userSessionsKey = this.getUserSessionsKey(userData.userId);
 
@@ -169,101 +171,42 @@ export class SessionService {
 
     /**
      *
-     * @param {UserData} userData - The user data to store
-     * @param {string} sessionId - The session ID
-     * @param {number} exp - The time to live for the session
+     * @param {SessionData} userData - The user data to store
      */
-    async updateSession(userData: UserData, sessionId: string, exp: number): Promise<void> {
-        const sessionKey = this.getSessionKey(sessionId);
+    async updateSession(userData: SessionData): Promise<void> {
+        const sessionKey = this.getSessionKey(userData.sessionId);
 
-        await this.cacheService.set(sessionKey, userData, convertTimeStampToSeconds(exp));
+        await this.cacheService.set(sessionKey, userData, convertTimeStampToSeconds(userData.expRef));
     }
 
     // save session and add to whitelist
     /**
      *
-     * @param {UserData} userData - The user data to store
-     * @param {RefreshToken} refreshToken - The refresh token to store
-     * @param {AccessToken} accessToken - The access token to store
+     * @param {SessionData} userData - The user data to store
      */
-    async createNewSession(userData: UserData, refreshToken: RefreshToken, accessToken: AccessToken): Promise<void> {
-        const sessionId = refreshToken.sessionId;
+    async createNewSession(userData: SessionData): Promise<void> {
+        const sessionId = userData.sessionId;
 
-        await Promise.all([
-            this.storeSession(userData, sessionId, refreshToken.exp),
-            this.addToWhitelistToken(
-                { jti: refreshToken.jwtId, exp: refreshToken.exp },
-                { jti: accessToken.jwtId, exp: accessToken.exp },
-            ),
-        ]).catch((err) => {
-            console.log(err);
-        });
-    }
-
-    // update session and add to whitelist token and add old token to blacklist\
-    /**
-     *
-     * @param {UserData} userData - The user data to store
-     * @param {RefreshToken} refreshToken - The refresh token to store
-     * @param {AccessToken} accessToken - The access token to store
-     */
-
-    /**
-     *
-     * @param {userData} userDataOld - The user data to store
-     * @param {RefreshToken} refreshToken - The refresh token to store
-     * @param {AccessToken} accessToken - The access token to store
-     */
-    async updateSessionAndAddToWhitelist(
-        userDataOld: UserData,
-        refreshToken: RefreshToken,
-        accessToken: AccessToken,
-    ): Promise<void> {
-        const sessionId = refreshToken.sessionId;
-        const oldRefreshToken = userDataOld.jwtRefreshId;
-        const oldAccessToken = userDataOld.jwtAccessId;
-
-        const newUserData: UserData = {
-            ...userDataOld,
-            jwtRefreshId: refreshToken.jwtId,
-            jwtAccessId: accessToken.jwtId,
-            expAcc: accessToken.exp,
-            expRef: refreshToken.exp,
-        };
-
-        await Promise.all([
-            this.removeWhitelistToken(oldRefreshToken, oldAccessToken),
-            this.updateSession(newUserData, sessionId, refreshToken.exp),
-            this.addToWhitelistToken(
-                { jti: refreshToken.jwtId, exp: refreshToken.exp },
-                { jti: accessToken.jwtId, exp: accessToken.exp },
-            ),
-            this.addToBlacklistToken(
-                { jti: oldRefreshToken, exp: userDataOld.expRef },
-                { jti: oldAccessToken, exp: userDataOld.expAcc },
-            ),
-        ]).catch((err) => {
-            console.log(err);
-        });
+        await this.storeSession(userData, sessionId, userData.expRef);
     }
 
     /**
      *
      * @param {string} sessionId - The session ID
-     * @returns {Promise<UserData>} The user data
+     * @returns {Promise<SessionData>} The user data
      */
-    async getUserSession(sessionId: string): Promise<UserData> {
+    async getSessionById(sessionId: string): Promise<SessionData> {
         const sessionKey = this.getSessionKey(sessionId);
 
-        return this.cacheService.get<UserData>(sessionKey);
+        return this.cacheService.get<SessionData>(sessionKey);
     }
 
     /**
      *
      * @param {string} userId - The user ID
-     * @returns {Promise<UserData[]>} The user data
+     * @returns {Promise<SessionData[]>} The user data
      */
-    async getAllSessions(userId: string): Promise<UserData[]> {
+    async getAllSessions(userId: string): Promise<SessionData[]> {
         const userSessionsKey = this.getUserSessionsKey(userId);
         const sessionIds = await this.cacheService.smembers(userSessionsKey);
         const pipeline = this.cacheService.pipeline();
@@ -276,7 +219,7 @@ export class SessionService {
 
         return sessionData
             .filter(([err, result]) => !err && result)
-            .map(([, result]) => JSON.parse(result) as UserData);
+            .map(([, result]) => JSON.parse(result) as SessionData);
     }
 
     /**
@@ -286,18 +229,13 @@ export class SessionService {
     async removeSession(sessionId: string): Promise<void> {
         const sessionKey = this.getSessionKey(sessionId);
         const userSessionsKey = this.getUserSessionsKey(sessionId);
-        const userData = await this.cacheService.get<UserData>(sessionKey);
+        const userData = await this.cacheService.get<SessionData>(sessionKey);
 
         console.log(userData);
 
         await Promise.all([
             this.cacheService.del(sessionKey),
             this.cacheService.srem(userSessionsKey, sessionId),
-            this.addToBlacklistToken(
-                { jti: userData.jwtRefreshId, exp: userData.expRef },
-                { jti: userData.jwtAccessId, exp: userData.expAcc },
-            ),
-            this.removeWhitelistToken(userData.jwtRefreshId, userData.jwtAccessId),
         ]).catch((err) => {
             console.log(err);
         });
@@ -318,17 +256,8 @@ export class SessionService {
 
         for (const sessionId of sessionIds) {
             const sessionKey = this.getSessionKey(sessionId);
-            const userData = await this.cacheService.get<UserData>(sessionKey);
 
-            await Promise.all([
-                this.addToBlacklistToken(
-                    { jti: userData.jwtRefreshId, exp: userData.expRef },
-                    { jti: userData.jwtAccessId, exp: userData.expAcc },
-                ),
-                this.removeWhitelistToken(userData.jwtRefreshId, userData.jwtAccessId),
-                this.cacheService.del(sessionKey),
-                this.cacheService.srem(userSessionsKey, sessionId),
-            ]);
+            await Promise.all([this.cacheService.del(sessionKey), this.cacheService.srem(userSessionsKey, sessionId)]);
 
             await pipeline.exec();
         }
@@ -344,23 +273,27 @@ export class SessionService {
 
     /**
      *
-     * @param {string} sessionId - The session ID
-     * @param {string} userId - The user ID
+     * @param {JwtPayload} jwtPayload - The payload to check
+     * @param {TokenValidationType} tokenValidationType - The token type to check
      * @returns {Promise<boolean>} Whether the session is valid
      */
-    async validateSession(sessionId: string, userId: string): Promise<boolean> {
-        const sessionKey = this.getSessionKey(sessionId);
-        const userSessionsKey = this.getUserSessionsKey(userId);
+    async validateSession(jwtPayload: JwtPayload, tokenValidationType: TokenValidationType): Promise<boolean> {
+        const dataSession = await this.getSessionById(jwtPayload.sessionId);
 
-        if (!sessionId || !userId) {
+        if (!dataSession) {
             return false;
         }
 
-        const [sessionExists, userSessionExists] = await Promise.all([
-            this.cacheService.checkExist(sessionKey),
-            this.cacheService.sismember(userSessionsKey, sessionId),
-        ]);
+        if (tokenValidationType === 'access') {
+            if (dataSession.jwtAccessId !== jwtPayload.jti) {
+                return false;
+            }
+        } else {
+            if (dataSession.jwtRefreshId !== jwtPayload.jti) {
+                return false;
+            }
+        }
 
-        return sessionExists && userSessionExists;
+        return true;
     }
 }
