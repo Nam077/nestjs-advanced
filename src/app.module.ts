@@ -24,6 +24,8 @@ import { WinstonModuleConfig } from '@modules/winston/winston.module';
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        I18nModuleLocal,
+
         ScheduleModule.forRoot(),
         CacheModule,
         WinstonModuleConfig,
