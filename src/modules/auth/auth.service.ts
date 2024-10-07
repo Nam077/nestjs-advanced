@@ -29,7 +29,7 @@ import { EmailAuthProducerService } from '@modules/message-queue/producers/email
 import { User } from '@modules/user/entities/user.entity';
 import { UserService } from '@modules/user/user.service';
 
-import { SessionService, UserData } from './session.service';
+import { SessionService } from './session.service';
 
 /**
  *
