@@ -1,6 +1,6 @@
+import { CursorData, FindOneOptionsCustom, PaginationData } from '@/common';
+
 import { APIResponseData } from '../types';
-import { CursorData, PaginationData } from './api-response.interface';
-import { FindOneOptionsCustom } from './find-one-option-custom.interface';
 
 /* eslint-disable @typescript-eslint/method-signature-style */
 

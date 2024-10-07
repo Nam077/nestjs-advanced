@@ -1,4 +1,4 @@
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -11,8 +11,8 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import * as os from 'os';
 
-import { AppModule } from '@src/app.module';
-import { setupSwagger } from '@src/common';
+import { AppModule } from '@/app.module';
+import { setupSwagger } from '@/common';
 
 /**
  * Bootstrap the NestJS application
@@ -47,7 +47,7 @@ async function bootstrap() {
 
     // Use global validation pipes
     app.useGlobalPipes(
-        new I18nValidationPipe({
+        new ValidationPipe({
             transform: true,
             whitelist: true,
             forbidNonWhitelisted: true,
@@ -56,6 +56,9 @@ async function bootstrap() {
             },
         }),
     );
+
+    // Use I18n validation pipe
+    app.useGlobalPipes(new I18nValidationPipe());
     // Enable CORS
     app.enableCors();
 

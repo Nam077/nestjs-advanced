@@ -2,17 +2,16 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
-import { CursorPaginationDtoBase } from '@src/common';
-
-import { UserEnumSerchFields } from './user-pagination.dto';
+import { CursorPaginationDtoBase } from '@/common';
+import { UserEnumSearchFields } from '@modules/user/dto/user-pagination.dto';
 
 /**
  *
  */
 export class UserCursorDto extends CursorPaginationDtoBase {
-    @ApiPropertyOptional({ description: 'Order by field', enum: UserEnumSerchFields })
+    @ApiPropertyOptional({ description: 'Order by field', enum: UserEnumSearchFields })
     @IsOptional()
-    @IsEnum(UserEnumSerchFields)
-    @IsIn(Object.values(UserEnumSerchFields))
+    @IsEnum(UserEnumSearchFields)
+    @IsIn(Object.values(UserEnumSearchFields))
     orderBy?: string;
 }

@@ -3,10 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
-import { RabbitMQConfigLoader } from './rabitmq-config.service';
-import { MailModule } from '../mail/mail.module';
-import { EmailAuthConsumerService } from './consumers/email-auth-consumer.service';
-import { EmailAuthProducerService } from './producers/email-auth-producer.service';
+import { MailModule } from '@modules/mail/mail.module';
+import { EmailAuthConsumerService } from '@modules/message-queue/consumers/email-auth-consumer.service';
+import { EmailAuthProducerService } from '@modules/message-queue/producers/email-auth-producer.service';
+import { RabbitMQConfigLoader } from '@modules/message-queue/rabitmq-config.service';
 
 /**
  * @module
@@ -24,4 +24,4 @@ import { EmailAuthProducerService } from './producers/email-auth-producer.servic
     providers: [RabbitMQConfigLoader, EmailAuthConsumerService, EmailAuthProducerService],
     exports: [EmailAuthProducerService],
 })
-export class MessageQueueModuleModule {}
+export class MessageQueueModule {}

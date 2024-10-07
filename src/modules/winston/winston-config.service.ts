@@ -9,7 +9,7 @@ import {
 import * as winston from 'winston';
 import { DailyRotateFile } from 'winston/lib/winston/transports';
 
-import { formatLog } from '@src/common';
+import { formatLog } from '@/common';
 
 export const loggerOptions = {
     transports: [

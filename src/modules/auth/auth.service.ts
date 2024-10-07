@@ -5,17 +5,6 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { Details } from 'express-useragent';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 
-import { RedisService } from '@cache/cache.service';
-import { I18nTranslations } from '@i18n/i18n.generated';
-import { LoginDto } from '@modules/auth/dtos/login.dto';
-import { RegisterDto } from '@modules/auth/dtos/register.dto';
-import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
-import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
-import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
-import { JwtServiceLocal } from '@modules/auth/jwt.service';
-import { User } from '@modules/user/entities/user.entity';
-import { UserService } from '@modules/user/user.service';
-import { EmailAuthProducerService } from '@rbmq/producers/email-auth-producer.service';
 import {
     AccessToken,
     convertTimeStampToSeconds,
@@ -27,7 +16,18 @@ import {
     SESSION_KEY,
     UserAuth,
     UserStatus,
-} from '@src/common';
+} from '@/common';
+import { RedisService } from '@cache/cache.service';
+import { I18nTranslations } from '@i18n/i18n.generated';
+import { LoginDto } from '@modules/auth/dtos/login.dto';
+import { RegisterDto } from '@modules/auth/dtos/register.dto';
+import { ResendEmailDto } from '@modules/auth/dtos/resend-email.dto';
+import { ResetPasswordDto } from '@modules/auth/dtos/reset-password.dto';
+import { SendRestPasswordDto } from '@modules/auth/dtos/send-reset-password.dto';
+import { JwtServiceLocal } from '@modules/auth/jwt.service';
+import { EmailAuthProducerService } from '@modules/message-queue/producers/email-auth-producer.service';
+import { User } from '@modules/user/entities/user.entity';
+import { UserService } from '@modules/user/user.service';
 
 export type TypeSendEmail = 'confirm' | 'reset';
 export interface UserData {
@@ -209,7 +209,7 @@ export class AuthService {
      * @throws {BadRequestException} - If registration fails.
      */
     async register(registerDto: RegisterDto): Promise<RegisterResponse> {
-        const user = await this.userService.register(registerDto);
+        const user: User = await this.userService.register(registerDto);
 
         if (!user) {
             throw new BadRequestException(

@@ -1,23 +1,25 @@
 # Sử dụng image Node.js chính thức
-FROM node:16-alpine
+FROM node:20-alpine
 
 # Tạo thư mục làm việc
 WORKDIR /app
 
-RUN npm install -g @nestjs/cli
+RUN yarn global add @nestjs/cli
 
 # Copy package.json và cài đặt dependencies
 COPY package*.json ./
-RUN npm install --only=production
+COPY yarn.lock ./
+RUN yarn install --production
 
 # Copy toàn bộ mã nguồn vào container
 COPY . .
 
 # Build ứng dụng NestJS
-RUN npm run build
+RUN yarn build
 
-# Expose cổng mà ứng dụng sẽ chạy
-EXPOSE 3000
+# Expose cổng mà ứng dụng sẽ chạy từ .env APP_PORT
+ARG APP_PORT
+EXPOSE $APP_PORT
 
 # Lệnh để chạy ứng dụng
-CMD ["npm", "run", "start:prod"]
+CMD ["yarn", "start:prod"]

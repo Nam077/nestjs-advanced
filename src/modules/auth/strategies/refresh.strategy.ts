@@ -5,9 +5,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { FastifyRequest } from 'fastify';
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
+import { JwtPayload, KeyType, UserAuth } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
 import { KeyService } from '@modules/key/key.service';
-import { JwtPayload, KeyType, UserAuth } from '@src/common';
 
 /**
  *

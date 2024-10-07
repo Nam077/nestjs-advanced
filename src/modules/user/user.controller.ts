@@ -1,13 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { APIResponseData, CurrentUser, UserAuth } from '@/common';
 import { CreateUserDto } from '@modules/user/dto/create-user.dto';
 import { UpdateUserDto } from '@modules/user/dto/update-user.dto';
 import { UserCursorDto } from '@modules/user/dto/user-cursor.dto';
 import { UserPaginationDto } from '@modules/user/dto/user-pagination.dto';
 import { User } from '@modules/user/entities/user.entity';
 import { UserService } from '@modules/user/user.service';
-import { APIResponseData, CurrentUser, UserAuth } from '@src/common';
 
 /**
  * User Controller
