@@ -20,10 +20,7 @@ RUN yarn build
 # Expose cổng mà ứng dụng sẽ chạy từ .env APP_PORT
 ARG APP_PORT
 EXPOSE $APP_PORT
-<<<<<<< HEAD
 
-=======
->>>>>>> refactor/config-project
 
 # Lệnh để chạy ứng dụng
 CMD ["yarn", "start:prod"]
