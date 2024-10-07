@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-import { OrderDirection } from '@src/common';
+import { OrderDirection } from '@/common';
 
 /**
  * Cursor pagination data transfer object.

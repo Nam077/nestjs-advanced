@@ -1,6 +1,6 @@
 import { Column, Entity } from 'typeorm';
 
-import { BaseEntityCustom, KeyType } from '@src/common';
+import { BaseEntityCustom, KeyType } from '@/common';
 
 /**
  * Entity để lưu thông tin về các khóa công khai và bí mật.

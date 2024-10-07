@@ -3,8 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
+import { UserRole, UserStatus } from '@/common';
 import { I18nTranslations } from '@i18n/i18n.generated';
-import { UserRole, UserStatus } from '@src/common';
 
 /**
  * @description DTO for creating a new user

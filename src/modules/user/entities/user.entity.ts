@@ -1,6 +1,6 @@
 import { Column, Entity, Index } from 'typeorm';
 
-import { BaseEntityCustom, UserRole, UserStatus, hashServiceInstance } from '@src/common';
+import { BaseEntityCustom, UserRole, UserStatus, hashServiceInstance } from '@/common';
 
 /**
  * @description User entity class for handling user data

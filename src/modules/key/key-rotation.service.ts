@@ -2,9 +2,8 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
-import { KeyType } from '@src/common';
-
-import { KeyService } from './key.service';
+import { KeyType } from '@/common';
+import { KeyService } from '@modules/key/key.service';
 
 /**
  * @class KeyRotationService

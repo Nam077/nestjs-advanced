@@ -4,8 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { AccessToken, JwtPayload, JwtResponse, KeyType, RefreshToken } from '@/common';
 import { KeyService } from '@modules/key/key.service';
-import { AccessToken, JwtPayload, JwtResponse, KeyType, RefreshToken } from '@src/common';
 
 /**
  * JwtServiceLocal provides methods to sign and decode JWT tokens,

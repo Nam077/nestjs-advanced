@@ -4,10 +4,10 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 
+import { JwtPayload, KeyType } from '@/common';
 import { AuthService } from '@modules/auth/auth.service';
 import { KeyService } from '@modules/key/key.service';
 import { User } from '@modules/user/entities/user.entity';
-import { JwtPayload, KeyType } from '@src/common';
 
 /**
  *

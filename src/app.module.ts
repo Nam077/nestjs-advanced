@@ -4,18 +4,17 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AppController } from '@/app.controller';
+import { AppService } from '@/app.service';
 import { CacheModule } from '@cache/cache.module';
 import { I18nModuleLocal } from '@i18n/i18n.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { KeyModule } from '@modules/key/key.module';
 import { MailModule } from '@modules/mail/mail.module';
+import { MessageQueueModule } from '@modules/message-queue/message-queue.module';
 import { DatabaseConfigService } from '@modules/providers/database-config.service';
-import { SessionModule } from '@modules/session/session.module';
 import { UserModule } from '@modules/user/user.module';
 import { WinstonModuleConfig } from '@modules/winston/winston.module';
-import { MessageQueueModuleModule } from '@rbmq/message-queue-module.module';
-import { AppController } from '@src/app.controller';
-import { AppService } from '@src/app.service';
 
 /**
  *
@@ -40,9 +39,8 @@ import { AppService } from '@src/app.service';
         UserModule,
         AuthModule,
         KeyModule,
-        SessionModule,
         MailModule,
-        MessageQueueModuleModule,
+        MessageQueueModule,
         I18nModuleLocal,
     ],
     controllers: [AppController],
