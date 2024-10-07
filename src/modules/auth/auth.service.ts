@@ -6,14 +6,14 @@ import { Details } from 'express-useragent';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 
 import {
-    AccessToken,
-    convertTimeStampToSeconds,
     GeoIpI,
     JwtPayload,
     JwtResponse,
     KeyType,
-    RefreshToken,
-    SESSION_KEY,
+    LoginResponse,
+    MessageResponse,
+    RegisterResponse,
+    TypeSendEmail,
     UserAuth,
     UserStatus,
 } from '@/common';
@@ -29,38 +29,10 @@ import { EmailAuthProducerService } from '@modules/message-queue/producers/email
 import { User } from '@modules/user/entities/user.entity';
 import { UserService } from '@modules/user/user.service';
 
-export type TypeSendEmail = 'confirm' | 'reset';
-export interface UserData {
-    ip: string;
-    userAgent: string;
-    userId: string;
-    email: string;
-    os: string;
-    browser: string;
-    jwtId: string;
-    sessionId?: string;
-}
-
-export interface LoginResponse {
-    data: {
-        accessToken: Omit<AccessToken, 'jwtId'>;
-        refreshToken: Omit<RefreshToken, 'jwtId' | 'sessionId'>;
-        user: User;
-    };
-    message: string;
-}
-
-export interface RegisterResponse {
-    message: string;
-    user: User;
-}
-
-export interface MessageResponse {
-    message: string;
-}
+import { SessionService, UserData } from './session.service';
 
 /**
- * @class AuthService - Handles authentication logic.
+ *
  */
 @Injectable()
 export class AuthService {
@@ -71,6 +43,7 @@ export class AuthService {
      * @param {RedisService} cacheService - The cache service.
      * @param {EmailAuthProducerService} emailAuthProducerService - The email producer service.
      * @param {I18nService<I18nTranslations>} i18nService - The i18n service.
+     * @param {SessionService} sessionService - The session service.
      */
     constructor(
         private readonly jwtService: JwtServiceLocal,
@@ -78,38 +51,8 @@ export class AuthService {
         private readonly cacheService: RedisService,
         private readonly emailAuthProducerService: EmailAuthProducerService,
         private readonly i18nService: I18nService<I18nTranslations>,
+        private readonly sessionService: SessionService,
     ) {}
-
-    /**
-     * Generates a Redis key for storing sessions related to a user.
-     * @param {string} userId - The user ID.
-     * @returns {string} Redis key.
-     */
-    private getUserSessionsKey(userId: string): string {
-        return `${SESSION_KEY}:user:${userId}`;
-    }
-
-    /**
-     * Generates a Redis key for a specific session.
-     * @param {string} sessionId - The session ID.
-     * @returns {string} Redis key.
-     */
-    private getSessionKey(sessionId: string): string {
-        return `${SESSION_KEY}:${sessionId}`;
-    }
-
-    /**
-     * Helper function to store session in Redis.
-     * @param {UserData} userData - The user data to store.
-     * @param {RefreshToken} refreshToken - The refresh token.
-     */
-    private async storeSession(userData: UserData, refreshToken: RefreshToken) {
-        const sessionKey = this.getSessionKey(refreshToken.sessionId);
-        const userSessionsKey = this.getUserSessionsKey(userData.userId);
-
-        await this.cacheService.set(sessionKey, userData, convertTimeStampToSeconds(refreshToken.exp));
-        await this.cacheService.sadd(userSessionsKey, refreshToken.sessionId);
-    }
 
     /**
      * Helper function to send email.
@@ -159,6 +102,30 @@ export class AuthService {
     }
 
     /**
+     *
+     * @param {GeoIpI} ipGeo - The Geo IP data.
+     * @param {Details} ua - The user agent data.
+     * @param {User} user - The user entity.
+     * @param {JwtResponse} jwtResponse - The JWT tokens.
+     * @returns {UserData} - The user data to store in Redis.
+     */
+    createUserData(ipGeo: GeoIpI, ua: Details, user: User, jwtResponse: JwtResponse): UserData {
+        return {
+            ip: ipGeo.ip,
+            userAgent: ua.source,
+            userId: user.id,
+            email: user.email,
+            os: ua.os,
+            browser: ua.browser,
+            jwtAccessId: jwtResponse.accessToken.jwtId,
+            expAcc: jwtResponse.accessToken.exp,
+            jwtRefreshId: jwtResponse.refreshToken.jwtId,
+            expRef: jwtResponse.refreshToken.exp,
+            sessionId: jwtResponse.refreshToken.sessionId,
+        };
+    }
+
+    /**
      * Handles user login and JWT token generation.
      * @param {LoginDto} loginDto - Login credentials.
      * @param {Details} ua - User agent data.
@@ -178,18 +145,9 @@ export class AuthService {
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
-        const userData: UserData = {
-            ip: ipGeo.ip,
-            userAgent: ua.source,
-            userId: user.id,
-            email: user.email,
-            os: ua.os,
-            browser: ua.browser,
-            jwtId: tokens.refreshToken.jwtId,
-            sessionId: tokens.refreshToken.sessionId,
-        };
+        const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.storeSession(userData, tokens.refreshToken);
+        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
         delete user.password;
 
         return {
@@ -240,9 +198,8 @@ export class AuthService {
      * @returns {Promise<JwtResponse>} - New JWT tokens.
      * @throws {UnauthorizedException} - If session is invalid or expired.
      */
-    async refresh(currentUser: UserAuth): Promise<JwtResponse> {
-        const sessionKey = this.getSessionKey(currentUser.sessionId);
-        const userData = await this.cacheService.get<UserData>(sessionKey);
+    async refresh(currentUser: UserAuth): Promise<LoginResponse> {
+        const userData = await this.sessionService.getUserSession(currentUser.sessionId);
 
         if (!userData) {
             throw new UnauthorizedException(
@@ -257,21 +214,14 @@ export class AuthService {
             sessionId: currentUser.sessionId,
         });
 
-        userData.jwtId = tokens.refreshToken.jwtId;
-        await this.cacheService.update(sessionKey, userData, convertTimeStampToSeconds(tokens.refreshToken.exp));
+        await this.sessionService.updateSessionAndAddToWhitelist(userData, tokens.refreshToken, tokens.accessToken);
 
         return {
-            accessToken: {
-                token: tokens.accessToken.token,
-                exp: tokens.accessToken.exp,
-                jwtId: tokens.accessToken.jwtId,
+            data: {
+                accessToken: { token: tokens.accessToken.token, exp: tokens.accessToken.exp },
+                refreshToken: { token: tokens.refreshToken.token, exp: tokens.refreshToken.exp },
             },
-            refreshToken: {
-                token: tokens.refreshToken.token,
-                exp: tokens.refreshToken.exp,
-                jwtId: tokens.refreshToken.jwtId,
-                sessionId: tokens.refreshToken.sessionId,
-            },
+            message: this.i18nService.translate('auth.messages.refreshSuccess', { lang: I18nContext.current().lang }),
         };
     }
 
@@ -290,12 +240,9 @@ export class AuthService {
                 this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
             );
 
-        const sessionKey = this.getSessionKey(decoded.sessionId);
-        const userSessionsKey = this.getUserSessionsKey(userId);
-        const isMember = await this.cacheService.sismember(userSessionsKey, decoded.sessionId);
-        const userData = await this.cacheService.get<UserData>(sessionKey);
+        const isValid = await this.sessionService.validateSession(decoded.sessionId, userId);
 
-        if (!isMember || !userData || userData.jwtId !== decoded.jti) {
+        if (!isValid) {
             throw new UnauthorizedException(
                 this.i18nService.translate('auth.exceptions.invalidCredentials', { lang: I18nContext.current().lang }),
             );
@@ -313,44 +260,13 @@ export class AuthService {
      * @returns {Promise<{ message: string }>} - Logout success message.
      */
     async logout(currentUser: UserAuth, refreshToken: string): Promise<{ message: string }> {
-        const decoded = this.jwtService.decode(refreshToken) as JwtPayload;
-        const sessionKey = this.getSessionKey(decoded.sessionId);
-        const userSessionsKey = this.getUserSessionsKey(currentUser.id);
+        const decoded = this.jwtService.decode(refreshToken, false) as JwtPayload;
 
-        await this.cacheService.srem(userSessionsKey, decoded.sessionId);
-        await this.cacheService.del(sessionKey);
+        await this.sessionService.removeSession(decoded.sessionId);
 
         return {
             message: this.i18nService.translate('auth.messages.logoutSuccess', { lang: I18nContext.current().lang }),
         };
-    }
-
-    /**
-     * Logs out all sessions for a user.
-     * @param {string} userId - The user ID.
-     * @param {string[]} sessionIds - Optional specific session IDs to log out.
-     * @returns {Promise<void>}
-     */
-    async logoutAllSessions(userId: string, sessionIds: string[] = []): Promise<void> {
-        const userSessionsKey = this.getUserSessionsKey(userId);
-
-        sessionIds = sessionIds.length ? sessionIds : await this.cacheService.smembers(userSessionsKey);
-        if (!sessionIds.length) return;
-
-        const pipeline = this.cacheService.pipeline();
-
-        sessionIds.forEach((sessionId) => {
-            const sessionKey = this.getSessionKey(sessionId);
-
-            pipeline.del(sessionKey);
-            pipeline.srem(userSessionsKey, sessionId);
-        });
-
-        await pipeline.exec();
-
-        if (!(await this.cacheService.smembers(userSessionsKey)).length) {
-            await this.cacheService.del(userSessionsKey);
-        }
     }
 
     /**
@@ -359,7 +275,7 @@ export class AuthService {
      * @returns {Promise<{ message: string }>} - Success message after logging out.
      */
     async logoutAll(currentUser: UserAuth): Promise<{ message: string }> {
-        await this.logoutAllSessions(currentUser.id);
+        await this.sessionService.removeAllSessions(currentUser.id);
 
         return {
             message: this.i18nService.translate('auth.messages.allSessionsLoggedOut', {
@@ -393,18 +309,9 @@ export class AuthService {
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
-        const userData: UserData = {
-            ip: ipGeo.ip,
-            userAgent: ua.source,
-            userId: user.id,
-            email: user.email,
-            os: ua.os,
-            browser: ua.browser,
-            jwtId: tokens.refreshToken.jwtId,
-            sessionId: tokens.refreshToken.sessionId,
-        };
+        const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.storeSession(userData, tokens.refreshToken);
+        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
         delete user.password;
 
         return {
@@ -448,18 +355,9 @@ export class AuthService {
 
         const tokens = await this.jwtService.signTokens({ email: user.email, sub: user.id, name: user.name });
 
-        const userData: UserData = {
-            ip: ipGeo.ip,
-            userAgent: ua.source,
-            userId: user.id,
-            email: user.email,
-            os: ua.os,
-            browser: ua.browser,
-            jwtId: tokens.refreshToken.jwtId,
-            sessionId: tokens.refreshToken.sessionId,
-        };
+        const userData = this.createUserData(ipGeo, ua, user, tokens);
 
-        await this.storeSession(userData, tokens.refreshToken);
+        await this.sessionService.createNewSession(userData, tokens.refreshToken, tokens.accessToken);
         delete user.password;
 
         return {
@@ -545,24 +443,7 @@ export class AuthService {
      * @returns {Promise<UserData[]>} - The list of user sessions.
      */
     async getUserSessions(userId: string): Promise<UserData[]> {
-        const userSessionsKey = this.getUserSessionsKey(userId);
-        const sessionIds = await this.cacheService.smembers(userSessionsKey);
-
-        if (!sessionIds.length) {
-            return [];
-        }
-
-        const pipeline = this.cacheService.pipeline();
-
-        sessionIds.forEach((sessionId) => {
-            const sessionKey = this.getSessionKey(sessionId);
-
-            pipeline.get(sessionKey);
-        });
-
-        const sessionResults = await pipeline.exec();
-
-        return sessionResults.map((result: string[]) => JSON.parse(result[1])); // Convert results to UserData[]
+        return await this.sessionService.getAllSessions(userId);
     }
 
     /**
@@ -572,7 +453,7 @@ export class AuthService {
      * @returns {Promise<{ message: string }>} - Success message.
      */
     async logoutSessions(userId: string, sessionIds: string[]): Promise<{ message: string }> {
-        await this.logoutAllSessions(userId, sessionIds);
+        await this.sessionService.removeAllSessions(userId, sessionIds);
 
         return {
             message: this.i18nService.translate('auth.messages.sessionLoggedOut', {

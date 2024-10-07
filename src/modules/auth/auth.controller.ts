@@ -2,8 +2,8 @@ import { Body, Controller, Delete, Get, Post, Query, Req, Res, UseGuards } from 
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
+import { Request, Response } from 'express';
 import { Details } from 'express-useragent';
-import { FastifyReply, FastifyRequest } from 'fastify';
 
 import { convertTimeStampToDate, CurrentUser, GeoIp, GeoIpI, UserAgentCustom, UserAuth } from '@/common';
 import { JwtAuthGuard } from '@guards/jwt.guard';
@@ -33,7 +33,7 @@ export class AuthController {
      * @param {LoginDto} loginDto - The login data
      * @param {Details} ua - The user agent data
      * @param {GeoIpI} ipGeo - The geo IP data
-     * @param {FastifyReply} response - The Fastify response object
+     * @param {Response} response - The  response object
      * @returns {Promise<any>} The login response
      */
     @Post('login')
@@ -41,11 +41,11 @@ export class AuthController {
         @Body() loginDto: LoginDto,
         @UserAgentCustom() ua: Details,
         @GeoIp() ipGeo: GeoIpI,
-        @Res({ passthrough: true }) response: FastifyReply,
+        @Res({ passthrough: true }) response: Response,
     ): Promise<any> {
         const data = await this.authService.login(loginDto, ua, ipGeo);
 
-        response.setCookie('refreshToken', data.data.refreshToken.token, {
+        response.cookie('refreshToken', data.data.refreshToken.token, {
             expires: convertTimeStampToDate(data.data.refreshToken.exp),
             httpOnly: true,
             path: '/',
@@ -74,7 +74,7 @@ export class AuthController {
      * @param {TokenDto} tokenDto - The token data
      * @param {Details} ua - The user agent data
      * @param {GeoIpI} ipGeo - The geo IP data
-     * @param {FastifyReply} response - The Fastify response object
+     * @param {Response} response - The  response object
      * @returns {Promise<any>} The login response
      */
     @Get('verify-email')
@@ -82,11 +82,11 @@ export class AuthController {
         @Query() tokenDto: TokenDto,
         @UserAgentCustom() ua: Details,
         @GeoIp() ipGeo: GeoIpI,
-        @Res({ passthrough: true }) response: FastifyReply,
+        @Res({ passthrough: true }) response: Response,
     ): Promise<any> {
         const data = await this.authService.verifyEmail(tokenDto.token, ua, ipGeo);
 
-        response.setCookie('refreshToken', data.data.refreshToken.token, {
+        response.cookie('refreshToken', data.data.refreshToken.token, {
             expires: convertTimeStampToDate(data.data.refreshToken.exp),
             httpOnly: true,
             path: '/',
@@ -121,25 +121,25 @@ export class AuthController {
     /**
      *
      * @param {UserAuth} currentUser - The current user
-     * @param {FastifyReply} response - The Fastify response object
+     * @param {Response} response - The Fastify response object
      * @returns {any} The refresh token
      */
     @UseGuards(RefreshGuard)
     @Post('refresh')
     async refresh(
         @CurrentUser<UserAuth>() currentUser: UserAuth,
-        @Res({ passthrough: true }) response: FastifyReply,
+        @Res({ passthrough: true }) response: Response,
     ): Promise<any> {
         const data = await this.authService.refresh(currentUser);
 
-        response.setCookie('refreshToken', data.refreshToken.token, {
-            expires: convertTimeStampToDate(data.refreshToken.exp),
+        response.cookie('refreshToken', data.data.refreshToken.token, {
+            expires: convertTimeStampToDate(data.data.refreshToken.exp),
             httpOnly: true,
             path: '/',
             sameSite: 'strict',
         });
 
-        delete data.refreshToken;
+        delete data.data.refreshToken;
 
         return data;
     }
@@ -147,21 +147,23 @@ export class AuthController {
     /**
      *
      * @param {UserAuth} currentUser - The current user
-     * @param {FastifyRequest} request - The Fastify request object
-     * @param {FastifyReply} response - The Fastify response object
-     * @returns {Promise<void>} The logout response
+     * @param {Request} request - The  request object
+     * @param {Response} response - The  response object
+     * @returns {Promise<any>} The logout response
      */
     @Get('logout')
     @UseGuards(JwtAuthGuard)
     async logout(
         @CurrentUser<UserAuth>() currentUser: UserAuth,
-        @Req() request: FastifyRequest,
-        @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<void> {
+        @Req() request: Request,
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<any> {
         const refreshToken = request.cookies['refreshToken'];
         const data = await this.authService.logout(currentUser, refreshToken);
 
-        return response.clearCookie('refreshToken').send({
+        response.clearCookie('refreshToken');
+
+        return response.send({
             message: data.message,
         });
     }
@@ -169,18 +171,20 @@ export class AuthController {
     /**
      *
      * @param {UserAuth} currentUser - The current user
-     * @param {FastifyReply} response - The Fastify response object
-     * @returns {Promise<void>} The logout all response
+     * @param {Response} response - The  response object
+     * @returns {Promise<any>} The logout all response
      */
     @Get('logout-all')
     @UseGuards(JwtAuthGuard)
     async logoutAll(
         @CurrentUser<UserAuth>() currentUser: UserAuth,
-        @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<void> {
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<any> {
         const data = await this.authService.logoutAll(currentUser);
 
-        return response.clearCookie('refreshToken').send({
+        response.clearCookie('refreshToken');
+
+        return response.send({
             message: data.message,
         });
     }
@@ -227,7 +231,7 @@ export class AuthController {
      * @param {ResetPasswordDto} resetPasswordDto - The reset password data
      * @param {Details} ua - The user agent data
      * @param {GeoIpI} ipGeo - The geo IP data
-     * @param {FastifyReply} response - The Fastify response object
+     * @param {Response} response - The Fastify response object
      * @returns {Promise<any>} The reset password response
      */
     @Get('reset-password')
@@ -236,11 +240,11 @@ export class AuthController {
         @Body() resetPasswordDto: ResetPasswordDto,
         @UserAgentCustom() ua: Details,
         @GeoIp() ipGeo: GeoIpI,
-        @Res({ passthrough: true }) response: FastifyReply,
+        @Res({ passthrough: true }) response: Response,
     ): Promise<any> {
         const data = await this.authService.resetPassword(tokenDto.token, resetPasswordDto, ua, ipGeo);
 
-        response.setCookie('refreshToken', data.data.refreshToken.token, {
+        response.cookie('refreshToken', data.data.refreshToken.token, {
             expires: convertTimeStampToDate(data.data.refreshToken.exp),
             httpOnly: true,
             path: '/',

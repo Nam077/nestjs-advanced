@@ -46,6 +46,15 @@ export class RedisService {
     }
 
     /**
+     *
+     * @param {string} key - Redis key
+     * @returns {Promise<boolean>} - Whether the key exists
+     */
+    async checkExist(key: string): Promise<boolean> {
+        return (await this.redis.exists(key)) > 0;
+    }
+
+    /**
      * Delete a key from Redis
      * @param {string} key - Redis key
      */

@@ -9,6 +9,8 @@ import { AuthService } from '@modules/auth/auth.service';
 import { KeyService } from '@modules/key/key.service';
 import { User } from '@modules/user/entities/user.entity';
 
+import { TokenCacheService } from '../token-cache.service';
+
 /**
  *
  */
@@ -19,11 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
      * @param {KeyService} keyService - The key service
      * @param {JwtService} jwtService - The JWT service
      * @param {AuthService} authService - The authentication service
+     * @param {TokenCacheService} tokenCacheService - The token cache service
      */
     constructor(
         private readonly keyService: KeyService,
         private readonly jwtService: JwtService,
         private readonly authService: AuthService,
+        private readonly tokenCacheService: TokenCacheService,
     ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -43,6 +47,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         if (!user) {
             throw new UnauthorizedException('Invalid token');
         }
+
+        await this.tokenCacheService.validateTokenInCache(payload.jti);
 
         return user;
     }
