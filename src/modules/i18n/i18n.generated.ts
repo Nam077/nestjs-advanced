@@ -16,6 +16,7 @@ export type I18nTranslations = {
             "verificationEmailSent": string;
             "resetPasswordEmailSent": string;
             "emailVerified": string;
+            "refreshSuccess": string;
         };
         "exceptions": {
             "invalidCredentials": string;
