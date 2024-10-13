@@ -435,4 +435,12 @@ export class AuthService {
             message: this.translateMessage('auth.messages.sessionLoggedOut'),
         };
     }
+
+    /**
+     * Gets the list of accepted hosts for CORS.
+     * @returns {string[]} - The list of accepted hosts.
+     */
+    async getAcceptHost(): Promise<string[]> {
+        return ['http://localhost:3001'];
+    }
 }

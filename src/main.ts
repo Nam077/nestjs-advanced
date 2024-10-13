@@ -13,6 +13,8 @@ import * as os from 'os';
 import { AppModule } from '@/app.module';
 import { setupSwagger } from '@/common';
 
+import { AuthService } from './modules/auth/auth.service';
+
 /**
  * Bootstrap the NestJS application
  */
@@ -20,6 +22,7 @@ async function bootstrap() {
     // Create the NestJS application instance using Fastify
     const app = await NestFactory.create(AppModule);
     const configService: ConfigService = app.get(ConfigService);
+    const authService: AuthService = app.get(AuthService);
     const PORT = configService.get<number>('APP_PORT', 3000);
 
     // Use Helmet for security headers
@@ -55,9 +58,18 @@ async function bootstrap() {
             errorHttpStatusCode: 422,
         }),
     );
+    const acceptHost = await authService.getAcceptHost();
+
+    console.log('acceptHost', acceptHost);
 
     // Enable CORS
-    app.enableCors();
+    app.enableCors({
+        origin: acceptHost,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+        credentials: true,
+    });
 
     // Setup Swagger documentation
     setupSwagger(app);
